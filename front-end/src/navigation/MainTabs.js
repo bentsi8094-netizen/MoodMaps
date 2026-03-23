@@ -122,6 +122,11 @@ const styles = StyleSheet.create({
   special_btn_text: {
     color: 'white',
     fontSize: 26,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    lineHeight: 40, // Reduced from 44 to shift it up
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    includeFontPadding: false,
+    marginBottom: 4 // Nudge it upwards
   }
 });

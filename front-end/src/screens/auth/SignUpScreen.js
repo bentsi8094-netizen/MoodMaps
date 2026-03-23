@@ -12,10 +12,10 @@ import {
   Keyboard, 
   Platform 
 } from "react-native";
-import GlassCard from "../components/GlassCard";
-import { user_service } from "../services/userService"; 
-import { pick_image } from "../utils/imageHelper";
-import { generate_alias } from "../utils/aliasGenerator";
+import GlassCard from "../../components/GlassCard";
+import { user_service } from "../../services/userService"; 
+import { pick_image } from "../../utils/imageHelper";
+import { generate_alias } from "../../utils/aliasGenerator";
 
 export default function SignUpScreen({ on_register }) {
   const [step, set_step] = useState(1);
@@ -78,11 +78,18 @@ export default function SignUpScreen({ on_register }) {
       data.append('user_alias', form_data.user_alias.trim());
 
       const file_name = image_uri.split('/').pop() || 'profile.jpg';
-      data.append('profile_image', {
-        uri: Platform.OS === 'ios' ? image_uri.replace('file://', '') : image_uri,
-        name: file_name,
-        type: `image/${file_name.split('.').pop() || 'jpeg'}`
-      });
+      
+      if (Platform.OS === 'web') {
+        const response = await fetch(image_uri);
+        const blob = await response.blob();
+        data.append('profile_image', blob, file_name);
+      } else {
+        data.append('profile_image', {
+          uri: Platform.OS === 'ios' ? image_uri.replace('file://', '') : image_uri,
+          name: file_name,
+          type: `image/${file_name.split('.').pop() || 'jpeg'}`
+        });
+      }
 
       const response = await user_service.register_with_image(data);
       if (response.success) {

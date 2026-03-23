@@ -28,28 +28,39 @@ export default function MyPostsScreen() {
     }
   }, [my_post]);
 
-  const handle_delete = () => {
+  const handle_delete = async () => {
     if (is_expired || !current_user?.id) return;
 
-    Alert.alert("הסרת מוד", "הפוסט והמידע שלו יימחקו, האם אתה בטוח שברצונך להסיר?", [
-      { text: "ביטול", style: "cancel" },
-      { 
-        text: "הסר", style: "destructive", 
-        onPress: async () => {
-          try {
-            const result = await remove_post();
-            if (result.success) {
-              await update_user_mood("😀", null);
-              Alert.alert("המוד הוסר בהצלחה");
-            } else {
-              Alert.alert("שגיאה", result.error || "לא ניתן היה להסיר את המוד");
-            }
-          } catch (e) {
-            Alert.alert("שגיאה", "לא ניתן היה להסיר את המוד כרגע");
-          }
-        } 
+    const on_confirm = async () => {
+      try {
+        console.log("[MyPosts] Starting deactivation...");
+        const result = await remove_post();
+        if (result.success) {
+          await update_user_mood("😀", null);
+          if (Platform.OS !== 'web') Alert.alert("המוד הוסר בהצלחה");
+          else alert("המוד הוסר בהצלחה");
+        } else {
+          const errMsg = result.error || "לא ניתן היה להסיר את המוד";
+          if (Platform.OS !== 'web') Alert.alert("שגיאה", errMsg);
+          else alert(`שגיאה: ${errMsg}`);
+        }
+      } catch (e) {
+        console.error("[MyPosts] Delete Error:", e.message);
+        if (Platform.OS !== 'web') Alert.alert("שגיאה", "לא ניתן היה להסיר את המוד כרגע");
+        else alert("שגיאה: לא ניתן היה להסיר את המוד כרגע");
       }
-    ]);
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm("הפוסט והמידע שלו יימחקו, האם אתה בטוח שברצונך להסיר?")) {
+        await on_confirm();
+      }
+    } else {
+      Alert.alert("הסרת מוד", "הפוסט והמידע שלו יימחקו, האם אתה בטוח שברצונך להסיר?", [
+        { text: "ביטול", style: "cancel" },
+        { text: "הסר", style: "destructive", onPress: on_confirm }
+      ]);
+    }
   };
 
   return (

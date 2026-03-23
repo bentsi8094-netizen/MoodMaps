@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import SignInScreen from "./SignInScreen";
 import SignUpScreen from "./SignUpScreen";
-import { useAppStore } from "../store/useAppStore";
+import { useAppStore } from "../../store/useAppStore";
 
 export default function UserMainScreen() {
   const [show_sign_up, set_show_sign_up] = useState(false);

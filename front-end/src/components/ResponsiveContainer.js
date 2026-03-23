@@ -21,23 +21,24 @@ const ResponsiveContainer = ({ children }) => {
 
         /* The actual modal container inside the portal */
         body > div[style*="position: fixed"] > div:last-child {
-          max-width: 480px !important;
+          max-width: 440px !important;
           width: 100% !important;
           margin: 0 auto !important;
           position: relative !important;
           left: auto !important;
           right: auto !important;
-          height: 98% !important;
-          top: auto !important;
-          border-radius: 12px !important;
+          height: 100% !important;
+          top: 0 !important;
+          border-radius: 0px !important;
           overflow: hidden !important;
           box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
         }
 
         /* Target role="dialog" variants */
         [role="dialog"] {
-          max-width: 480px !important;
+          max-width: 440px !important;
           margin: 0 auto !important;
+          border-radius: 0px !important;
         }
       `;
       document.head.appendChild(style);
@@ -67,14 +68,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0b',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 10,
+    paddingVertical: 0,
   },
   app_frame: {
-    width: 480, // Increased width for better web legibility
-    height: '98%',
-    maxHeight: 1080,
+    width: 440, // Slightly wider desktop view
+    height: '100%',
+    maxHeight: '100%',
     backgroundColor: '#000',
-    borderRadius: 12,
+    borderRadius: 0,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#333',

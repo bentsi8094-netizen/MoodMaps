@@ -23,6 +23,8 @@ const normalize_user_data = (raw_data) => {
   };
 };
 
+console.log("[Store] Initialized with API_BASE_URL:", API_BASE_URL);
+
 export const useAppStore = create(
   persist(
     (set, get) => ({
@@ -215,7 +217,7 @@ export const useAppStore = create(
               messages: [],
               comments: []
             }));
-            get().refresh_locations(true);
+            await get().refresh_locations(true);
             return { success: true };
           }
           return result;
@@ -236,25 +238,37 @@ export const useAppStore = create(
         
         if (force) set({ is_loading_map: true });
         try {
+          console.log("[Store] Refreshing locations... force:", force);
           const { status } = await Location.requestForegroundPermissionsAsync();
+          console.log("[Store] Location Permission Status:", status);
           let coords = null;
 
           if (status === 'granted') {
-            const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() => null);
+            const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch((e) => {
+              console.warn("[Store] GetPosition Error:", e.message);
+              return null;
+            });
             if (loc) {
               coords = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
+              console.log("[Store] Got Coords:", coords);
               set({ user_location: coords });
+              
+              if (current_user?.id) {
+                console.log("[Store] Updating location in backend...");
+                await map_service.update_location(coords);
+              }
+            } else {
+              console.warn("[Store] Location found was null");
             }
           }
 
-          const requests = [map_service.get_map_users()];
-          if (coords && current_user?.id) {
-            requests.push(map_service.update_location(coords));
-          }
-
-          const [mapRes] = await Promise.all(requests);
+          console.log("[Store] Fetching map users...");
+          const mapRes = await map_service.get_map_users();
           if (mapRes?.success) {
+            console.log("[Store] Map Users Count:", mapRes.users?.length || 0);
             set({ nearby_users: mapRes.users || [], last_map_update: now });
+          } else {
+            console.error("[Store] Map Fetch Failed:", mapRes?.error);
           }
         } catch (error) {
           console.error("[Store] Map Refresh Error:", error.message);

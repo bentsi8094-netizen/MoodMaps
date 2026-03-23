@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppStore } from '../store/useAppStore';
 
-import UserMainScreen from '../auth/UserMainScreen';
+import UserMainScreen from '../screens/auth/UserMainScreen';
 import MainTabs from './MainTabs';
 
 const Stack = createStackNavigator();

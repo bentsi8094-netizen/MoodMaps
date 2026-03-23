@@ -18,6 +18,7 @@ import AiAgentModal from "../components/AiAgentModal";
 import { useNewPost } from "../hooks/useNewPost";
 
 export default function NewPostScreen({ navigation }) {
+  const [show_emoji_hint, set_show_emoji_hint] = useState(false);
   const on_post_success = () => {
     navigation.navigate('Feed');
   };
@@ -45,6 +46,10 @@ export default function NewPostScreen({ navigation }) {
   }, []);
 
   const handle_emoji_press = () => {
+    if (Platform.OS === 'web') {
+      set_show_emoji_hint(true);
+      setTimeout(() => set_show_emoji_hint(false), 4000);
+    }
     if (emojiInputRef.current) {
       emojiInputRef.current.blur();
       setTimeout(() => {
@@ -145,6 +150,16 @@ export default function NewPostScreen({ navigation }) {
                   blurOnSubmit={false}
                 />
               </View>
+              
+              {show_emoji_hint && (
+                <Animatable.View 
+                  animation="fadeInUp" 
+                  duration={400} 
+                  style={styles.emoji_hint_popup}
+                >
+                  <Text style={styles.emoji_hint_text}>לחץ Win + . להוספת אימוג'י ⌨️</Text>
+                </Animatable.View>
+              )}
               
               <TouchableOpacity 
                 style={[styles.ai_flex_btn, checking_chat && styles.btn_loading]} 
@@ -279,5 +294,25 @@ const styles = StyleSheet.create({
     elevation: 6
   },
   publish_btn_text: { color: 'white', fontWeight: 'bold', fontSize: 18 },
-  btn_disabled: { backgroundColor: '#333', shadowOpacity: 0 }
+  btn_disabled: { backgroundColor: '#333', shadowOpacity: 0 },
+  emoji_hint_popup: {
+    position: 'absolute',
+    bottom: 70,
+    right: 0,
+    backgroundColor: '#00b4d8',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 10
+  },
+  emoji_hint_text: {
+    color: 'white',
+    fontSize: 12,
+    fontWeight: 'bold'
+  }
 });

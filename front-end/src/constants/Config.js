@@ -6,7 +6,12 @@ const getBaseUrl = () => {
     return process.env.EXPO_PUBLIC_API_URL;
   }
   
-  // Priority 2: Local development / fallback
+  // Priority 2: Local development detection for Web
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return "http://localhost:5000";
+  }
+  
+  // Priority 3: local/fallback
   return "https://moodmaps-native.onrender.com";
 };
 

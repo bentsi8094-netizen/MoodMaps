@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Keyboard } from "react-native";
-import GlassCard from "../components/GlassCard";
-import { user_service } from "../services/userService";
+import GlassCard from "../../components/GlassCard";
+import { user_service } from "../../services/userService";
 
 export default function SignInScreen({ on_login }) {
   const [is_loading, set_is_loading] = useState(false);

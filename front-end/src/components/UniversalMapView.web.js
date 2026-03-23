@@ -57,7 +57,8 @@ const UniversalMapView = forwardRef(({
           lng: initialRegion?.longitude || 35.2137 
         },
         zoom: 13,
-        disableDefaultUI: false,
+        disableDefaultUI: true,
+        gestureHandling: 'greedy',
         styles: [] 
       });
 
