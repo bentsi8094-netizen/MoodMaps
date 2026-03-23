@@ -1,5 +1,5 @@
 import React, { useContext, useCallback, useRef, useEffect } from 'react';
-import { View, StyleSheet, ActivityIndicator, StatusBar, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, StatusBar, TouchableOpacity, Text, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator, TransitionPresets, CardStyleInterpolators } from '@react-navigation/stack';
@@ -93,6 +93,43 @@ export default function RootNavigator() {
       <View style={styles.center_container}>
         <LinearGradient colors={['#4c669f', '#3b5998', '#192f6a']} style={StyleSheet.absoluteFill} />
         <ActivityIndicator size="large" color="#ffffff" />
+      </View>
+    );
+  }
+
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[styles.full_screen, { backgroundColor: 'transparent' }]}>
+        <StatusBar barStyle="light-content" />
+        <LinearGradient 
+          colors={current_user ? ['#00b4d8', '#9d4edd', '#f72585'] : ['#4c669f', '#3b5998', '#192f6a']} 
+          style={StyleSheet.absoluteFill} 
+        />
+        <NavigationContainer theme={TransparentTheme}>
+          <Stack.Navigator 
+            screenOptions={{ 
+              headerShown: false, 
+              animationEnabled: false, 
+              detachPreviousScreen: false,
+              gestureEnabled: false, 
+              cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
+              cardStyle: { 
+                backgroundColor: 'transparent',
+                elevation: 0,
+                shadowOpacity: 0,
+                shadowColor: 'transparent',
+              } 
+            }}
+          >
+            {!current_user ? (
+              <Stack.Screen name="Auth" component={UserMainScreen}/>
+            ) : (
+              <Stack.Group>
+                <Stack.Screen name="AppRoot" component={AppWithHeader} />
+              </Stack.Group>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
       </View>
     );
   }

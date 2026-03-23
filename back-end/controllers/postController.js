@@ -316,9 +316,9 @@ const get_map_users = async (req, res) => {
 
         const { data: allLocs, error: locError } = await supabase
             .from('locations')
-            .select('session_id, latitude, longitude, location_number')
+            .select('session_id, latitude, longitude, updated_at')
             .in('session_id', session_ids)
-            .order('location_number', { ascending: false });
+            .order('updated_at', { ascending: false });
 
         if (locError) throw locError;
 

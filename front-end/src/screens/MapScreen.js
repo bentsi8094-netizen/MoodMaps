@@ -7,9 +7,10 @@ import { Image } from 'expo-image';
 import * as Animatable from 'react-native-animatable';
 import { useAppStore } from "../store/useAppStore";
 
-const UserMarker = memo(({ user, is_me, onPress }) => {
+const UserMarker = memo(({ user, is_me, onPress, map }) => {
   return (
     <Marker
+      map={map}
       coordinate={{ 
         latitude: parseFloat(user.latitude) || 0, 
         longitude: parseFloat(user.longitude) || 0 
@@ -51,7 +52,8 @@ const UserMarker = memo(({ user, is_me, onPress }) => {
     prev.user.latitude === next.user.latitude &&
     prev.user.longitude === next.user.longitude &&
     prev.user.emoji === next.user.emoji &&
-    prev.user.sticker_url === next.user.sticker_url
+    prev.user.sticker_url === next.user.sticker_url &&
+    prev.map === next.map
   );
 });
 

@@ -8,29 +8,42 @@ const UniversalMapView = forwardRef(({
   onMapReady,
   mapPadding 
 }, ref) => {
+  const [mapInstance, setMapInstance] = React.useState(null);
   const mapDivRef = useRef(null);
   const googleMapRef = useRef(null);
 
   useImperativeHandle(ref, () => ({
     animateToRegion: (region, duration) => {
-      if (googleMapRef.current) {
-        googleMapRef.current.panTo({ lat: region.latitude, lng: region.longitude });
+      if (mapInstance) {
+        mapInstance.panTo({ lat: region.latitude, lng: region.longitude });
         // zoom level roughly corresponding to deltas
         const zoom = Math.round(Math.log2(360 / Math.max(region.latitudeDelta, region.longitudeDelta)));
-        googleMapRef.current.setZoom(zoom > 15 ? 15 : zoom);
+        mapInstance.setZoom(zoom > 15 ? 15 : zoom);
       }
     }
   }));
-
   useEffect(() => {
     // Load Google Maps script if not loaded
+    const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyDfh_ojB5d0L3Vs3Nu6k4berPbvRjzZvuI";
+    
     if (!window.google) {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyDfh_ojB5d0L3Vs3Nu6k4berPbvRjzZvuI`; // Using the key from app.json
-      script.async = true;
-      script.defer = true;
-      script.onload = () => initMap();
-      document.head.appendChild(script);
+      if (!apiKey) {
+        console.warn("Google Maps API Key is missing. Set EXPO_PUBLIC_GOOGLE_MAPS_API_KEY in your .env file.");
+      }
+      
+      const scriptId = 'google-maps-script';
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => initMap();
+        script.onerror = () => {
+          console.error("Failed to load Google Maps script. Check your API key and internet connection.");
+        };
+        document.head.appendChild(script);
+      }
     } else {
       initMap();
     }
@@ -44,30 +57,12 @@ const UniversalMapView = forwardRef(({
           lng: initialRegion?.longitude || 35.2137 
         },
         zoom: 13,
-        disableDefaultUI: true,
-        styles: [
-          {
-            "elementType": "geometry",
-            "stylers": [{"color": "#242f3e"}]
-          },
-          {
-            "elementType": "labels.text.fill",
-            "stylers": [{"color": "#746855"}]
-          },
-          {
-            "elementType": "labels.text.stroke",
-            "stylers": [{"color": "#242f3e"}]
-          },
-          {
-            "featureType": "administrative.locality",
-            "elementType": "labels.text.fill",
-            "stylers": [{"color": "#d59563"}]
-          },
-          // ... more dark mode styles can be added to match the app's look
-        ]
+        disableDefaultUI: false,
+        styles: [] 
       });
 
       googleMapRef.current = map;
+      setMapInstance(map);
       if (onMapReady) onMapReady();
     }
   }, []);
@@ -79,7 +74,7 @@ const UniversalMapView = forwardRef(({
           so we'll handle Markers inside the Map component or via a simple global/ref approach. */}
       {React.Children.map(children, child => {
         if (React.isValidElement(child)) {
-          return React.cloneElement(child, { map: googleMapRef.current });
+          return React.cloneElement(child, { map: mapInstance });
         }
         return child;
       })}

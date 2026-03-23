@@ -100,7 +100,7 @@ export default function SignUpScreen({ on_register }) {
   const update_field = (field, value) => set_form_data(prev => ({ ...prev, [field]: value }));
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, Platform.OS === 'web' && { flex: 1, width: '100%' }]}>
       <ScrollView 
         contentContainerStyle={styles.scroll_content} 
         keyboardShouldPersistTaps="always"

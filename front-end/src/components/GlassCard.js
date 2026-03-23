@@ -15,9 +15,10 @@ export default function GlassCard({ children, style }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    width: width * 0.9,
+    width: '95%',
+    maxWidth: 440,
     alignSelf: 'center',
-    borderRadius: 28,
+    borderRadius: 22,
     marginVertical: 10,
     backgroundColor: 'rgba(255, 255, 255, 0.15)', 
     borderWidth: 1,

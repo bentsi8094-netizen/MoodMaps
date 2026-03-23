@@ -6,6 +6,45 @@ const ResponsiveContainer = ({ children }) => {
   const isWeb = Platform.OS === 'web';
   const isDesktop = isWeb && width > 600;
 
+  React.useEffect(() => {
+    if (isWeb) {
+      // Inject global CSS to constrain portals (Modals) to the app frame width on desktop
+      const style = document.createElement('style');
+      style.innerHTML = `
+        /* RN Web Modal portal root targeting */
+        body > div[style*="position: fixed"] {
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          background-color: rgba(0,0,0,0.5) !important;
+        }
+
+        /* The actual modal container inside the portal */
+        body > div[style*="position: fixed"] > div:last-child {
+          max-width: 480px !important;
+          width: 100% !important;
+          margin: 0 auto !important;
+          position: relative !important;
+          left: auto !important;
+          right: auto !important;
+          height: 98% !important;
+          top: auto !important;
+          border-radius: 12px !important;
+          overflow: hidden !important;
+          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+        }
+
+        /* Target role="dialog" variants */
+        [role="dialog"] {
+          max-width: 480px !important;
+          margin: 0 auto !important;
+        }
+      `;
+      document.head.appendChild(style);
+      return () => document.head.removeChild(style);
+    }
+  }, [isWeb]);
+
   if (!isDesktop) {
     return <View style={styles.mobile_full}>{children}</View>;
   }
@@ -28,17 +67,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#0a0a0b',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 10,
   },
   app_frame: {
-    width: 430, // iPhone 14-15 Pro Max width approx
-    height: '92%',
-    maxHeight: 932,
+    width: 480, // Increased width for better web legibility
+    height: '98%',
+    maxHeight: 1080,
     backgroundColor: '#000',
-    borderRadius: 40,
+    borderRadius: 12,
     overflow: 'hidden',
-    borderWidth: 8,
-    borderColor: '#1a1a1c',
+    borderWidth: 1,
+    borderColor: '#333',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 25 },
     shadowOpacity: 0.6,
