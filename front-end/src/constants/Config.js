@@ -1,13 +1,12 @@
 import Constants from 'expo-constants';
 
 const getBaseUrl = () => {
-  // קודם כל בודק אם יש משתנה סביבה (למשל ב-Vercel)
-  // ב-Expo Web המשתנים חייבים להתחיל ב-EXPO_PUBLIC
+  // Priority 1: Vercel / CI/CD environment variables (must start with EXPO_PUBLIC_)
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
   
-  // ברירת מחדל אם אין משתנה (למשל בהרצה מקומית)
+  // Priority 2: Local development / fallback
   return "https://moodmaps-native.onrender.com";
 };
 
