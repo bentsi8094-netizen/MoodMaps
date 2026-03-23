@@ -58,8 +58,15 @@ const UniversalMapView = forwardRef(({
         },
         zoom: 13,
         disableDefaultUI: true,
+        clickableIcons: false,
         gestureHandling: 'greedy',
-        styles: [] 
+        styles: [
+          {
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }]
+          }
+        ]
       });
 
       googleMapRef.current = map;

@@ -136,6 +136,10 @@ export const useAppStore = create(
         if (!current_user?.id) return { success: false, error: "no_user" };
         
         try {
+          // חובה לעדכן מיקום לפני ישיבת הפוסט כדי שהשרת ימצא מיקום לשייך לסשן החדש
+          console.log("[Store] Seeding location before post creation...");
+          await get().refresh_locations(true);
+
           const result = await post_service.create_post(post_data);
           
           if (result?.success) {
@@ -160,7 +164,8 @@ export const useAppStore = create(
               await fetch_posts();
             }
             await get().sync_active_session();
-            await get().refresh_locations(true);
+            // עדכון נוסף אחרי למקרה שהמיקום השתנה תוך כדי
+            get().refresh_locations(true);
             return { success: true };
           }
           return result;
@@ -194,6 +199,8 @@ export const useAppStore = create(
               })) 
             }));
           } else if (response?.success && !response.active) {
+            // ניקוי "פוסט רפאים" - אם הסשן שלי לא פעיל, ודא שהפוסט שלי לא מוצג בפיד
+            console.log("[Store] No active session found. Cleaning up ghosts.");
             set(state => ({
               active_posts: state.active_posts.filter(p => String(p.user_id).toLowerCase() !== String(current_user.id).toLowerCase()),
               comments: [],
