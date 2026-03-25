@@ -9,6 +9,7 @@ import { map_service } from '../services/mapService';
 import { chat_service } from '../services/chatService';
 import { comment_service } from '../services/commentService';
 import { set_unauthorized_callback, update_api_token } from '../services/apiClient';
+import { API_BASE_URL } from '../constants/Config';
 
 const normalize_user_data = (raw_data) => {
   if (!raw_data) return null;
