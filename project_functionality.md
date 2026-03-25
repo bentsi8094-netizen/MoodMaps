@@ -1,147 +1,141 @@
-# MoodMaps - המדריך המלא למפתח (The Ultimate Developer Guide)
+# MoodMaps - Technical Architecture & Developer Documentation
 
-مدריך זה מרכז את כלל הידע הארכיטקטוני, הלוגי והטכני של פרויקט MoodMaps, במטרה לאפשר למתכנתים הבאים להבין את המערכת לעומק ולהמשיך את פיתוחה בצורה חלקה.
+## 1. System Overview
+**MoodMaps** is a location-based social platforms that enables users to express and share their real-time emotional states on a collective digital map and a community feed. 
 
----
+### Core Concept & Product Vision
+The product is built around the idea of "Emotional Geography." Instead of static profiles, MoodMaps focuses on "the now." Users share their current mood through text, which is analyzed by AI to generate a representative emoji and a high-quality Giphy sticker. These moods are pinned to the user's GPS coordinates, creating a living, breathing emotional map of a city or community.
 
-## 1. מבוא וחזון הפרויקט
-MoodMaps היא אפליקציה חברתית מבוססת מיקום המאפשרת למשתמשים לשתף את מצב הרוח שלהם בזמן אמת על גבי מפה ופיד קהילתי. החזון הוא ליצור מרחב דינמי שבו הבעה רגשית הופכת לנקודות אור גיאוגרפיות, תוך שימוש בבינה מלאכותית (AI) כדי להעשיר את החוויה ולהפוך טקסט חופשי למדבקות (Stickers) ואימוג'ים מעוצבים.
-
----
-
-## 2. ארכיטקטורת המערכת
-המערכת בנויה במבנה שכבות (Layered Architecture) המפריד בין הנתונים, הלוגיקה והתצוגה:
-
-### 2.1 Backend (Node.js & Express)
-- **Controllers**: מטפלים בלוגיקה העסקית (Authentication, Posts, Comments, Map, AI).
-- **Services**: שירותים חיצוניים (UploadService ל-Cloudinary/S3, ChatService ל-OpenAI).
-- **Config**: הגדרות חיבור ל-Supabase.
-- **Middleware**: אימות זהות (JWT) ואבטחה.
-
-### 2.2 Frontend (React Native & Expo)
-- **Navigation**: שימוש ב-React Navigation (Stack & Tabs) לניהול זרימת המסכים.
-- **State Management (Zustand)**: ניהול מצב גלובלי מהיר ויעיל הכולל סנכרון נתונים, ניהול משתמש ומיקום.
-- **Components**: רכיבי UI מעוצבים בסגנון Glassmorphism עם דגש על אסתטיקה וביצועים.
-- **Hooks**: לוגיקה ניתנת לשימוש חוזר (למשל `useFeedFilters`).
+### Target Users & Use Cases
+- **Community Seekers**: Users looking to see how others in their vicinity are feeling.
+- **Micro-Bloggers**: People who want to log their emotional journey with a visual flair.
+- **Local Interactions**: Discovering nearby users with similar moods to foster spontaneous social interaction.
 
 ---
 
-## 3. מודל הנתונים (Database Schema - Supabase)
-בסיס הנתונים מנוהל ב-PostgreSQL תחת Supabase:
+## 2. Architecture Breakdown (Monorepo)
+MoodMaps uses a monorepo structure to manage its three primary layers. This ensures a shared understanding of the API contracts and simplifies the synchronization of the data models.
 
-- **profiles**: מידע על המשתמש (ID, Alias, Avatar, Location).
-- **posts**: עדכוני מצב רוח. כל פוסט מקושר ל-`session_id`.
-- **ai_conversations**: היסטוריית הצ'אט של המשתמש עם ה-AI בתוך סשן פעיל.
-- **comments**: תגובות חברתיות על פוסטים.
+- **`/server`**: The central Node.js/Express brain. It handles the single source of truth for all data and external integrations.
+- **`/mobile`**: A React Native (Expo) application targeting iOS and Android. It focuses on a smooth, gesture-heavy mobile experience.
+- **`/web`**: A web application built using React Native for Web. It mirrors the mobile functionality but is optimized for desktop and mobile browsers, deployed via Vercel.
 
----
-
-## 4. לוגיקת ה-Sessions (חלון 24 שעות) - האתגר הגדול
-אחד המנגנונים המורכבים ביותר ב-MoodMaps הוא ניהול "הסשן הפעיל". 
-בניגוד לפוסטים רגילים ברשתות חברתיות, ב-MoodMaps פוסט הוא חלק מ"מצב רוח נוכחי" שנמשך כל עוד יש פעילות.
-
-### 4.1 חלון 24 שעות מחליק (Sliding Window)
-פוסט נחשב ל"חי" בפיד ובמפה רק אם הייתה בו פעילות ב-24 השעות האחרונות.
-- **פעילות ליבה (Liveness)**: יצירת פוסט חדש או שליחת הודעה ל-AI. אלו מאריכים את חיי הסשן ב-24 שעות נוספות.
-- **תגובות (Comments)**: תגובות חברתיות **אינן** מאריכות את חיי הפוסט. המטרה היא להבטיח שהתוכן על המפה תמיד מייצג את "כאן ועכשיו" של המשתמש.
-
-### 4.2 מזהה סשן (session_id)
-כל משתמש מחזיק `session_id` אחד בלבד בכל רגע נתון שבו הוא "פעיל". ברגע שנוצר פוסט חדש מעבר ל-24 שעות מהפעילות האחרונה, נוצר `session_id` חדש.
+### Data Flow
+The architecture follows a standard **Client-Server-Database** pattern:
+1.  **Clients** (Web/Mobile) manage local state via **Zustand**.
+2.  State updates trigger asynchronous calls to the **Backend API**.
+3.  The **Backend** processes logic, interacts with **Supabase (PostgreSQL)**, and returns a unified response.
+4.  Clients update their global state, triggering UI re-renders across the Map and Feed components.
 
 ---
 
-## 5. אינטגרציית AI ו-Giphy
-המערכת משתמשת ב-GPT-4o כדי לנתח את הטקסט שהמשתמש כותב ("איך המרגש?").
-1. ה-AI מנתח את הסנטימנט.
-2. ה-AI בוחר אימוג'י מתאים.
-3. ה-AI מייצר מונח חיפוש ל-Giphy API כדי להביא מדבקה (Sticker) איכותית ושקופה.
-4. המשתמש יכול לבחור את התוצאה ולהפוך אותה למראה הרשמי שלו על המפה.
+## 3. Backend (server)
+The backend is a robust Express.js application designed for scalability and high-concurrency event handling.
+
+### Entry Point (`server.js`)
+The `server.js` file initializes the Express app, configures global middleware (CORS, JSON parsing), and defines the top-level route prefixes. It also includes a `/ping` health-check endpoint used by Render and external Cron jobs to monitor uptime.
+
+### Middleware
+- **Auth (protect)**: A JWT-based middleware that validates the `Authorization: Bearer <token>` header, attaching the `user_id` to the request object.
+- **Error Handling**: A centralized catch-all middleware that logs stack traces and returns user-friendly Hebrew error messages.
+
+### Routes & Controllers
+- **`/api/users`**: Handles registration (with Cloudinary image upload), login, and profile retrieval.
+- **`/api/posts`**: The core of the system. Includes:
+    - `create`: Initializes a new active session.
+    - `update-active`: Allows the AI agent to update the emoji/sticker of the current session.
+    - `deactivate`: Manually closes a session.
+    - `my-session`: Retrieves the user's current live status.
+- **`/api/comments`**: Manages the social layer beneath each post.
+- **`/api/ai`**: Orchestrates the communication with OpenAI for the mood analysis.
+
+### Services & Integrations
+- **Supabase**: Used as the primary PostgreSQL database and for its real-time capabilities.
+- **Cloudinary**: Handles storage for user avatars and profile images.
+- **OpenAI Service**: Wraps the GPT-4o API for sentiment analysis.
+- **Giphy Service**: Converts AI-suggested terms into visual stickers.
 
 ---
 
-## 6. אופטימיזציה וביצועים (Performance)
-בוצעו מספר צעדים קריטיים כדי להבטיח חוויית משתמש "חמאה":
+## 4. Frontend (Mobile + Web)
+The frontend layers share an identical service structure to maintain parity, but utilize platform-specific components where necessary.
 
-- **Map Rendering**: אנחנו מנטרלים אנימציות "Pulse" אינסופיות לכלל המרקרים פרט למשתמש עצמו, כדי להוריד עומס מה-CPU.
-# MoodMaps - המדריך המלא למפתח (The Ultimate Developer Guide)
+### Shared State Management (`useAppStore.js`)
+Zustand is the heart of the frontend. It manages:
+- **Authentication State**: Persistence of tokens via `AsyncStorage` (web uses `localStorage` shim).
+- **Post Persistence**: Local caching of the global feed.
+- **Location Sync**: Periodic background GPS pings (mobile) and reactive location updates (web).
+- **Session Cleanup**: Proactive logic to remove "ghost" posts (posts that the server no longer considers active).
 
-> [!CAUTION]
-> **BACK-END IS FROZEN (READ-ONLY)**
-> Any changes, deletions, or additions to the `back-end/` directory are **STRICTLY PROHIBITED**. The backend is currently serving a live Native application, and ANY modification will break existing functionality. All synchronization and feature updates must be handled exclusively within the `front-end/` layer.
+### Navigation & UX
+- **Mobile**: Uses `react-navigation` with a Bottom Tab layout (Map, Feed, New Post).
+- **Web**: Uses `react-navigation` (integrated with browsers history API) for a semi-responsive layout that maintains the mobile-first aesthetic on larger screens.
+- **Glassmorphism**: Both platforms use a custom `GlassCard` component to create a premium, translucent design language.
 
-מדריך זה מרכז את כלל הידע הארכיטקטוני, הלוגי והטכני של פרויקט MoodMaps, במטרה לאפשר למתכנתים הבאים להבין את המערכת לעומק ולהמשיך את פיתוחה בצורה חלקה.
-
----
-
-## 1. מבוא וחזון הפרויקט
-MoodMaps היא אפליקציה חברתית מבוססת מיקום המאפשרת למשתמשים לשתף את מצב הרוח שלהם בזמן אמת על גבי מפה ופיד קהילתי. החזון הוא ליצור מרחב דינמי שבו הבעה רגשית הופכת לנקודות אור גיאוגרפיות, תוך שימוש בבינה מלאכותית (AI) כדי להעשיר את החוויה ולהפוך טקסט חופשי למדבקות (Stickers) ואימוג'ים מעוצבים.
-
----
-
-## 2. ארכיטקטורת המערכת
-המערכת בנויה במבנה שכבות (Layered Architecture) המפריד בין הנתונים, הלוגיקה והתצוגה:
-
-### 2.1 Backend (Node.js & Express)
-- **Controllers**: מטפלים בלוגיקה העסקית (Authentication, Posts, Comments, Map, AI).
-- **Services**: שירותים חיצוניים (UploadService ל-Cloudinary/S3, ChatService ל-OpenAI).
-- **Config**: הגדרות חיבור ל-Supabase.
-- **Middleware**: אימות זהות (JWT) ואבטחה.
-
-### 2.2 Frontend (React Native & Expo)
-- **Navigation**: שימוש ב-React Navigation (Stack & Tabs) לניהול זרימת המסכים.
-- **State Management (Zustand)**: ניהול מצב גלובלי מהיר ויעיל הכולל סנכרון נתונים, ניהול משתמש ומיקום.
-- **Components**: רכיבי UI מעוצבים בסגנון Glassmorphism עם דגש על אסתטיקה וביצועים.
-- **Hooks**: לוגיקה ניתנת לשימוש חוזר (למשל `useFeedFilters`).
+### API Communication Layer (`apiClient.js`)
+A unified fetch wrapper that handles:
+- Automatic inclusion of JWT tokens.
+- 401 Unauthorized handling (automatic logout).
+- Standardized success/error object responses.
 
 ---
 
-## 3. מודל הנתונים (Database Schema - Supabase)
-בסיס הנתונים מנוהל ב-PostgreSQL תחת Supabase:
+## 5. AI Integration (The Agent)
+The "AI Agent" is the primary USP (Unique Selling Proposition) of MoodMaps.
 
-- **profiles**: מידע על המשתמש (ID, Alias, Avatar, Location).
-- **posts**: עדכוני מצב רוח. כל פוסט מקושר ל-`session_id`.
-- **ai_conversations**: היסטוריית הצ'אט של המשתמש עם ה-AI בתוך סשן פעיל.
-- **comments**: תגובות חברתיות על פוסטים.
-
----
-
-## 4. לוגיקת ה-Sessions (חלון 24 שעות) - האתגר הגדול
-אחד המנגנונים המורכבים ביותר ב-MoodMaps הוא ניהול "הסשן הפעיל".
-בניגוד לפוסטים רגילים ברשתות חברתיות, ב-MoodMaps פוסט הוא חלק מ"מצב רוח נוכחי" שנמשך כל עוד יש פעילות.
-
-### 4.1 חלון 24 שעות מחליק (Sliding Window)
-פוסט נחשב ל"חי" בפיד ובמפה רק אם הייתה בו פעילות ב-24 השעות האחרונות.
-- **פעילות ליבה (Liveness)**: יצירת פוסט חדש או שליחת הודעה ל-AI. אלו מאריכים את חיי הסשן ב-24 שעות נוספות.
-- **תגובות (Comments)**: תגובות חברתיות **אינן** מאריכות את חיי הפוסט. המטרה היא להבטיח שהתוכן על המפה תמיד מייצג את "כאן ועכשיו" של המשתמש.
-
-### 4.2 מזהה סשן (session_id)
-כל משתמש מחזיק `session_id` אחד בלבד בכל רגע נתון שבו הוא "פעיל". ברגע שנוצר פוסט חדש מעבר ל-24 שעות מהפעילות האחרונה, נוצר `session_id` חדש.
+### The Flow:
+1.  **Input**: User types "I'm feeling a bit overwhelmed but also hopeful."
+2.  **Analysis**: The client sends this to `/api/ai/chat`.
+3.  **Processing**: The backend prompts GPT-4o to return a JSON object containing:
+    - `emoji`: A single representative character (e.g., 🌊).
+    - `giphy_query`: A optimized search term (e.g., "tranquil ocean").
+4.  **Sticker Fetch**: The backend immediately queries the Giphy SDK and returns the URL of a transparent sticker.
+5.  **Finalization**: The user previews the sticker and "publishes" the update, which hits `/api/posts/update-active`.
 
 ---
 
-## 5. אינטגרציית AI ו-Giphy
-המערכת משתמשת ב-GPT-4o כדי לנתח את הטקסט שהמשתמש כותב ("איך המרגש?").
-1. ה-AI מנתח את הסנטימנט.
-2. ה-AI בוחר אימוג'י מתאים.
-3. ה-AI מייצר מונח חיפוש ל-Giphy API כדי להביא מדבקה (Sticker) איכותית ושקופה.
-4. המשתמש יכול לבחור את התוצאה ולהפוך אותה למראה הרשמי שלו על המפה.
+## 6. Key Features & Logic
+
+### Sliding 24h Session Window
+Posts in MoodMaps are not permanent. A post is "Active" (visible on the map/feed) only if:
+- It was created less than 24 hours ago.
+- OR, there was "Liveness activity" (a new AI message or update) in the last 24 hours.
+*Note: Comments do not extend liveness.*
+
+### Location Seeding
+To prevent markers from being missing, the frontend "seeds" the location by fetching the current GPS coordinates *before* the post-creation API call is fired. This ensures every active session has valid coordinates from the start.
+
+### Map Clustering & Markers
+The Map uses custom marker components (`UniversalMarker`) that are optimized for performance. On Web, these are direct overlays on the Google Maps JS SDK for maximum fluidness.
 
 ---
 
-## 6. אופטימיזציה וביצועים (Performance)
-בוצעו מספר צעדים קריטיים כדי להבטיח חוויית משתמש "חמאה":
+## 7. Important Design Decisions
 
-- **Map Rendering**: אנחנו מנטרלים אנימציות "Pulse" אינסופיות לכלל המרקרים פרט למשתמש עצמו, כדי להוריד עומס מה-CPU.
-- **FlatList Optimization**: בפיד אנחנו משתמשים ב-`windowSize` קטן וב-`maxToRenderPerBatch` מותאם אישית כדי למנוע "קפיצות" וזיכרון מנופח.
-- **Auth Transitions**: השימוש ב-`is_loading_user` עם השהייה של 250ms מבטיח שמעברים בין LOGIN ל-APP ייראו חלקים ללא "זליגה" של מסכים.
+- **Unidirection API (Web -> Server)**: To ensure stability, the `web` implementation was designed to follow the `server` API exactly, even when the `mobile` app contained legacy bugs. This makes the Web version the "Reference Implementation."
+- **Monorepo Separation**: While files are shared, the `mobile` and `web` directories are kept separate to allow platform-specific build optimizations (Metro for mobile, Webpack/Vite for web via Expo).
 
 ---
 
-## 7. אתגרים ופתרונות
-- **זליגת מידע בתגובות**: פתרנו באג שבו תגובות מפוסט אחד השפיעו על פוסט אחר על ידי העברת ניהול התגובות מ-State גלובלי ל-Local State בתוך ה-Modal.
-- **סנכרון מיקום**: האפליקציה מבצעת "Ping" של מיקום בכל פעם שמשתמש מעדכן מצב רוח כדי להבטיח שהמפה מעודכנת.
+## 8. Deployment Strategy
+
+- **Backend**: Deployed on **Render** (as a Web Service).
+- **Web App**: Deployed on **Vercel**. Requires SPA routing configuration in `vercel.json`.
+- **Root Directory Strategy**: The project must use **Root Directory** settings in deployment providers (e.g., `server/` for the backend, `web/` for the website) to ensure correct dependency resolution.
 
 ---
 
-## 8. סיכום למתכנת
-כדי להמשיך לפתח, התרכז ב-`useAppStore.js` – הלב הפועם של הלוגיקה. המערכת תוכננה להיות מודולרית (Scalable), וניתן להוסיף סוגי מדיה נוספים או אינטראקציות חברתיות חדשות בקלות על בסיס ה-`session_id` הקיים.
+## 9. Known Limitations & Future Roadmap
+
+### Limitations
+- **Cold Boot (Render Free Tier)**: The backend may take up to 30 seconds to spin up after inactivity, causing initial 504 errors on the frontend.
+- **Location Permissions**: The map requires explicit user permission. If denied, the user remains invisible on the map.
+
+### Roadmap
+- **Push Notifications**: Real-time alerts when a user in your vicinity shares a core mood.
+- **Direct Messaging**: Moving beyond public comments to private ephemeral chats.
+- **Enhanced AI Customization**: Allowing users to refine the AI-generated sticker via further prompts.
+
+---
+**Prepared by**: Antigravity Technical Architecture Team
+**Last Updated**: March 2026
