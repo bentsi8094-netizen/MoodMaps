@@ -16,7 +16,14 @@ export const post_service = {
     return api_client.get('/api/posts/my-session');
   },
 
-  deactivate_status: () => api_client.post('/api/posts/deactivate')
+  deactivate_status: () => api_client.post('/api/posts/deactivate'),
+
+  update_active_status: (emoji, sticker_url) => {
+    return api_client.post('/api/posts/update-active', {
+      emoji,
+      sticker_url: sticker_url || null
+    });
+  }
 };
 
 export default post_service;

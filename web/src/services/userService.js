@@ -21,13 +21,7 @@ export const user_service = {
   register_with_image: async (form_data) => {
     const result = await api_client.post('/api/users/register', form_data);
     return normalize_user(result);
-  },
-
-  update_mood: (last_mood, last_sticker_url) => 
-    api_client.post('/api/users/update-mood', { 
-      last_mood, 
-      last_sticker_url: last_sticker_url || null 
-    })
+  }
 };
 
 export default user_service;

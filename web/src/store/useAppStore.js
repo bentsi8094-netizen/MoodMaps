@@ -99,7 +99,7 @@ export const useAppStore = create(
         const { current_user } = get();
         if (!current_user?.id) return { success: false };
         try {
-          const response = await user_service.update_mood(new_mood, sticker_url);
+          const response = await post_service.update_active_status(new_mood, sticker_url);
           if (response?.success) {
             set({ current_user: { ...current_user, mood: new_mood, sticker_url } });
             return { success: true };

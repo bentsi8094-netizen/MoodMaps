@@ -1,0 +1,23 @@
+{
+  "version": 2,
+  "public": true,
+  "name": "mood-maps-web",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "env": {
+    "EXPO_PUBLIC_API_URL": "https://moodmaps-native.onrender.com"
+  }
+}
