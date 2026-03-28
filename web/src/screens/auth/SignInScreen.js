@@ -41,7 +41,7 @@ export default function SignInScreen({ on_login }) {
           </TouchableOpacity>
           <TextInput 
             ref={password_ref} 
-            style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', paddingRight: 10, outlineStyle: 'none' }]} 
+            style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', paddingRight: 0, outlineStyle: 'none' }]} 
             placeholder="סיסמה" 
             placeholderTextColor="rgba(255,255,255,0.5)" 
             secureTextEntry={!show_password} 
