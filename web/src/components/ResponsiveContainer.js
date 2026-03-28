@@ -46,6 +46,7 @@ const ResponsiveContainer = ({ children }) => {
 const styles = StyleSheet.create({
   mobile_full: {
     flex: 1,
+    height: '100%',
   },
   web_outer_wrapper: {
     flex: 1,

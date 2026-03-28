@@ -59,13 +59,13 @@ export default function MainTabs() {
       initialRouteName="Feed"
       tabBarPosition="bottom"
       tabBar={props => <CustomTabBar {...props} />}
-      style={{ backgroundColor: 'transparent' }}
+      style={{ backgroundColor: 'transparent', flex: 1 }}
       screenOptions={{
-        swipeEnabled: true, // Re-enabled as requested by user
+        swipeEnabled: true,
         animationEnabled: true,
         tabBarBounces: true,
       }}
-      sceneContainerStyle={{ backgroundColor: 'transparent', elevation: 0 }}
+      sceneContainerStyle={{ backgroundColor: 'transparent', flex: 1 }}
     >
       <Tab.Screen name="Map" component={MapScreen} />
       <Tab.Screen name="Feed" component={FeedScreen} />
