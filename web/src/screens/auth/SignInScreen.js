@@ -38,9 +38,7 @@ export default function SignInScreen({ on_login }) {
         <View style={styles.password_container}>
           <TextInput 
             ref={password_ref} 
-          <TextInput 
-            ref={password_ref} 
-            style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent' }]} 
+            style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', padding: 15 }]} 
             placeholder="סיסמה" 
             placeholderTextColor="rgba(255,255,255,0.5)" 
             secureTextEntry={!show_password} 
