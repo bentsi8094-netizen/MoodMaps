@@ -78,34 +78,35 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   nav_bar_container: {
     position: Platform.OS === 'web' ? 'fixed' : 'absolute',
-    bottom: 20, 
+    bottom: 14, // Lowered slightly from 20
     width: '100%',
     alignItems: 'center',
     zIndex: 1000
   },
   nav_bar: {
     flexDirection: 'row-reverse',
-    width: '90%', // Slightly narrower for cleaner look
-    height: 64, // Slightly taller
-    borderRadius: 32,
-    backgroundColor: 'rgba(25, 25, 30, 0.85)', // Darker, more glassmorphic
+    width: '94%', // Wider look
+    height: 58, // Shorter height
+    borderRadius: 29,
+    backgroundColor: 'rgba(255, 255, 255, 0.12)', // Light glass effect
     justifyContent: 'space-around',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
   },
   tab_btn: {
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
   },
   nav_text: {
     color: 'white',
     fontWeight: '600',
-    opacity: 0.7
+    opacity: 0.7,
+    fontSize: 13,
   },
   active_nav_text: {
     opacity: 1,
@@ -113,24 +114,22 @@ const styles = StyleSheet.create({
   },
   special_btn: {
     backgroundColor: '#00b4d8',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 4,
-    shadowColor: "#000000ff",
+    shadowColor: "#000000",
     shadowOpacity: 0.2,
     shadowRadius: 3
   },
   special_btn_text: {
     color: 'white',
-    fontSize: 26,
-    fontWeight: 'bold',
-    lineHeight: 40, // Reduced from 44 to shift it up
+    fontSize: 28,
+    fontWeight: '300', // Thinner for more elegant look
+    lineHeight: Platform.OS === 'web' ? 38 : 42, 
     textAlign: 'center',
-    textAlignVertical: 'center',
     includeFontPadding: false,
-    marginBottom: 4 // Nudge it upwards
   }
 });
