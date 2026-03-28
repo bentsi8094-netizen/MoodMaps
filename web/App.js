@@ -10,6 +10,13 @@ if (Platform.OS === 'web') {
     html, body {
       color-scheme: light !important;
     }
+    /* Hide Google Maps extra UI on Web */
+    .gm-style-cc, .gmnoprint, .gm-style-mtc {
+      display: none !important;
+    }
+    a[href^="https://maps.google.com/maps"] {
+      display: none !important;
+    }
   `;
   document.head.appendChild(style);
 }
