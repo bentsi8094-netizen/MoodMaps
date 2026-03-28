@@ -36,6 +36,9 @@ export default function SignInScreen({ on_login }) {
         />
         
         <View style={styles.password_container}>
+          <TouchableOpacity style={styles.eye_icon} onPress={() => set_show_password(!show_password)}>
+            <Text style={{ fontSize: 22 }}>{show_password ? "👁️" : "🙈"}</Text>
+          </TouchableOpacity>
           <TextInput 
             ref={password_ref} 
             style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', padding: 15 }]} 
@@ -45,9 +48,6 @@ export default function SignInScreen({ on_login }) {
             value={form_data.password} 
             onChangeText={(v) => set_form_data({ ...form_data, password: v })} 
           />
-          <TouchableOpacity style={styles.eye_icon} onPress={() => set_show_password(!show_password)}>
-            <Text style={{ fontSize: 22 }}>{show_password ? "👁️" : "🙈"}</Text>
-          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={[styles.button, is_loading && styles.button_disabled]} onPress={handle_login} disabled={is_loading}>

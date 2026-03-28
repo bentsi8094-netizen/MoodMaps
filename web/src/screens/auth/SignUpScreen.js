@@ -129,6 +129,9 @@ export default function SignUpScreen({ on_register }) {
             <View>
               <TextInput style={styles.input} placeholder="אימייל" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} placeholderTextColor="#ccc" value={form_data.email} onChangeText={(v) => update_field('email', v)} />
               <View style={styles.password_container}>
+                <TouchableOpacity style={styles.eye_icon} onPress={() => set_show_password(!show_password)}>
+                  <Text style={{ fontSize: 22 }}>{show_password ? "👁️" : "🙈"}</Text>
+                </TouchableOpacity>
                 <TextInput 
                   style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent' }]} 
                   placeholder="סיסמה" 
@@ -137,9 +140,6 @@ export default function SignUpScreen({ on_register }) {
                   value={form_data.password} 
                   onChangeText={(v) => update_field('password', v)} 
                 />
-                <TouchableOpacity style={styles.eye_icon} onPress={() => set_show_password(!show_password)}>
-                  <Text style={{ fontSize: 22 }}>{show_password ? "👁️" : "🙈"}</Text>
-                </TouchableOpacity>
               </View>
               <View style={styles.row}>
                 <TouchableOpacity style={[styles.button, styles.back_btn]} onPress={() => navigate_to_step(1)}>
