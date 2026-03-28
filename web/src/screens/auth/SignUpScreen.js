@@ -133,7 +133,7 @@ export default function SignUpScreen({ on_register }) {
                   <Text style={{ fontSize: 22 }}>{show_password ? "👁️" : "🙈"}</Text>
                 </TouchableOpacity>
                 <TextInput 
-                  style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', paddingRight: 15, outlineStyle: 'none' }]} 
+                  style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', paddingRight: 10, outlineStyle: 'none' }]} 
                   placeholder="סיסמה" 
                   secureTextEntry={!show_password} 
                   placeholderTextColor="#ccc" 
