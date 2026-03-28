@@ -133,7 +133,7 @@ export default function SignUpScreen({ on_register }) {
                   <Text style={{ fontSize: 22 }}>{show_password ? "👁️" : "🙈"}</Text>
                 </TouchableOpacity>
                 <TextInput 
-                  style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', paddingRight: 20 }]} 
+                  style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent', paddingRight: 20, outlineStyle: 'none' }]} 
                   placeholder="סיסמה" 
                   secureTextEntry={!show_password} 
                   placeholderTextColor="#ccc" 
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   step_indicator: { color: '#00b4d8', textAlign: 'center', marginBottom: 20, fontSize: 14, fontWeight: '600' },
   input: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 15, paddingRight: 20, color: 'white', marginBottom: 15, textAlign: 'right', fontSize: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  eye_icon: { width: 55, height: '100%', justifyContent: 'center', alignItems: 'center' },
+  eye_icon: { width: 55, height: '100%', justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
   button: { backgroundColor: '#00b4d8', padding: 15, borderRadius: 12, alignItems: 'center', height: 55, justifyContent: 'center' },
   submit_btn: { backgroundColor: '#0077b6' },
   button_text: { color: 'white', fontWeight: 'bold', fontSize: 16 },
