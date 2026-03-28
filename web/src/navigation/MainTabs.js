@@ -116,13 +116,12 @@ const styles = StyleSheet.create({
   },
   indicator: {
     position: 'absolute',
-    right: '2%', // Align with the first tab (Map)
+    right: '2%', // Align with the first tab
     width: '23%',
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Subtle highlight
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    height: 3, // Thin underline
+    bottom: 8, // Positioned at the bottom
+    backgroundColor: 'white',
+    borderRadius: 2,
   },
   tab_btn: {
     paddingVertical: 8,
