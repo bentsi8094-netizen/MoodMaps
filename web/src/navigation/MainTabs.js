@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Platform, Animated } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useNavigation } from '@react-navigation/native';
 
@@ -10,12 +10,31 @@ import NewPostScreen from '../screens/NewPostScreen';
 
 const Tab = createMaterialTopTabNavigator();
 
-function CustomTabBar({ state, navigation }) {
+function CustomTabBar({ state, navigation, position }) {
+  const { routes } = state;
+  
+  // Calculate the movement of the indicator
+  // Since we use flexDirection: 'row-reverse', the index 0 (Map) is on the right.
+  // We'll interpolate the position to move a highlight bar.
+  const translateX = position.interpolate({
+    inputRange: [0, 1, 2, 3],
+    outputRange: [0, -1, -2, -3], // Normalized units
+  });
 
   return (
     <View style={styles.nav_bar_container} pointerEvents="box-none">
       <View style={styles.nav_bar}>
-
+        {/* Animated Background Indicator */}
+        <Animated.View 
+          style={[
+            styles.indicator, 
+            { 
+              transform: [{ 
+                translateX: Animated.multiply(translateX, (Platform.OS === 'web' ? 75 : 85)) 
+              }] 
+            }
+          ]} 
+        />
 
         <TouchableOpacity
           style={styles.special_btn}
@@ -24,14 +43,12 @@ function CustomTabBar({ state, navigation }) {
           <Text style={styles.special_btn_text}>+</Text>
         </TouchableOpacity>
 
-
         <TouchableOpacity
           onPress={() => navigation.navigate('MyPosts')}
           style={styles.tab_btn}
         >
           <Text style={[styles.nav_text, state.index === 2 && styles.active_nav_text]}>המוד שלי</Text>
         </TouchableOpacity>
-
 
         <TouchableOpacity
           onPress={() => navigation.navigate('Feed')}
@@ -40,14 +57,12 @@ function CustomTabBar({ state, navigation }) {
           <Text style={[styles.nav_text, state.index === 1 && styles.active_nav_text]}>פיד</Text>
         </TouchableOpacity>
 
-
         <TouchableOpacity
           onPress={() => navigation.navigate('Map')}
           style={styles.tab_btn}
         >
           <Text style={[styles.nav_text, state.index === 0 && styles.active_nav_text]}>מפה</Text>
         </TouchableOpacity>
-
       </View>
     </View>
   );
@@ -78,17 +93,17 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   nav_bar_container: {
     position: Platform.OS === 'web' ? 'fixed' : 'absolute',
-    bottom: 14, // Lowered slightly from 20
+    bottom: 14, 
     width: '100%',
     alignItems: 'center',
     zIndex: 1000
   },
   nav_bar: {
     flexDirection: 'row-reverse',
-    width: '94%', // Wider look
-    height: 58, // Shorter height
+    width: '94%',
+    height: 58,
     borderRadius: 29,
-    backgroundColor: 'rgba(255, 255, 255, 0.12)', // Light glass effect
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
     justifyContent: 'space-around',
     alignItems: 'center',
     borderWidth: 1,
@@ -97,10 +112,22 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 10,
+    paddingHorizontal: 5,
+  },
+  indicator: {
+    position: 'absolute',
+    right: '2%', // Align with the first tab (Map)
+    width: '23%',
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Subtle highlight
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   tab_btn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
+    zIndex: 2,
   },
   nav_text: {
     color: 'white',
@@ -110,7 +137,7 @@ const styles = StyleSheet.create({
   },
   active_nav_text: {
     opacity: 1,
-    textDecorationLine: 'underline'
+    // Removed textDecorationLine: 'underline'
   },
   special_btn: {
     backgroundColor: '#00b4d8',
@@ -122,12 +149,13 @@ const styles = StyleSheet.create({
     elevation: 4,
     shadowColor: "#000000",
     shadowOpacity: 0.2,
-    shadowRadius: 3
+    shadowRadius: 3,
+    zIndex: 2,
   },
   special_btn_text: {
     color: 'white',
     fontSize: 28,
-    fontWeight: '300', // Thinner for more elegant look
+    fontWeight: '300',
     lineHeight: Platform.OS === 'web' ? 38 : 42, 
     textAlign: 'center',
     includeFontPadding: false,
