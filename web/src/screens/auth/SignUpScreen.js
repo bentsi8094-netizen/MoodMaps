@@ -186,11 +186,11 @@ export default function SignUpScreen({ on_register }) {
 
 const styles = StyleSheet.create({
   container: { /* flex: 1 הוסר כדי למנוע מתיחה */ }, 
-  scroll_content: { paddingVertical: 20, paddingHorizontal: 20, flexGrow: 1, justifyContent: 'center' }, 
+  scroll_content: { paddingVertical: 20, paddingHorizontal: 0, flexGrow: 1, justifyContent: 'center' }, 
   step_indicator: { color: '#00b4d8', textAlign: 'center', marginBottom: 20, fontSize: 14, fontWeight: '600' },
   input: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 15, color: 'white', marginBottom: 15, textAlign: 'right' },
   password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, overflow: 'hidden' },
-  eye_icon: { paddingHorizontal: 15 },
+  eye_icon: { width: 55, height: '100%', justifyContent: 'center', alignItems: 'center' },
   button: { backgroundColor: '#00b4d8', padding: 15, borderRadius: 12, alignItems: 'center', height: 55, justifyContent: 'center' },
   submit_btn: { backgroundColor: '#0077b6' },
   button_text: { color: 'white', fontWeight: 'bold', fontSize: 16 },
