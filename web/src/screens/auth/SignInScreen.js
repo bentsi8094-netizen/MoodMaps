@@ -61,8 +61,8 @@ export default function SignInScreen({ on_login }) {
 const styles = StyleSheet.create({
   container: { width: '100%' },
   input: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 15, color: 'white', marginBottom: 15, textAlign: 'right', fontSize: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  eye_icon: { width: 65, height: '100%', justifyContent: 'center', alignItems: 'center' },
+  password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  eye_icon: { width: 70, height: '100%', justifyContent: 'center', alignItems: 'center' },
   button: { backgroundColor: '#00b4d8', padding: 15, borderRadius: 12, alignItems: 'center', height: 55, justifyContent: 'center', marginTop: 5 },
   button_disabled: { opacity: 0.6 },
   button_text: { color: 'white', fontWeight: 'bold', fontSize: 16 }
