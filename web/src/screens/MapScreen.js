@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: 'transparent', 
-    marginBottom: 100, // Increased for a larger visual gap
+    marginBottom: 110, // Added another ~2mm for perfect clearance
     borderRadius: 20, 
     overflow: 'hidden', 
     marginHorizontal: 22, // Wider side margins (2mm per side)

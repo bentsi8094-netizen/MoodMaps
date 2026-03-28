@@ -133,7 +133,7 @@ export default function MyPostsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scroll_content: { padding: 20, paddingTop: 40, paddingBottom: 60 },
+  scroll_content: { padding: 20, paddingTop: 40, paddingBottom: 150 },
   title: { color: 'white', fontSize: 28, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' },
   header_container: { alignItems: 'center', marginBottom: 20 },
   user_avatar: { width: 70, height: 70, borderRadius: 35, marginBottom: 10, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' },
