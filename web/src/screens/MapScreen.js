@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: 'transparent', 
-    marginBottom: 90, // Gap between map and fixed nav bar
+    marginBottom: 100, // Increased for a larger visual gap
     borderRadius: 20, 
     overflow: 'hidden', 
     marginHorizontal: 22, // Wider side margins (2mm per side)
