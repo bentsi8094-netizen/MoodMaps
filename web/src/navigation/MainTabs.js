@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Platform, Animated } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useNavigation } from '@react-navigation/native';
 
@@ -10,29 +10,10 @@ import NewPostScreen from '../screens/NewPostScreen';
 
 const Tab = createMaterialTopTabNavigator();
 
-function CustomTabBar({ state, navigation, position }) {
-  const { routes } = state;
-  
-  // Percentage-based calculation to ensure it works on all screen widths
-  // Each tab takes up roughly 25% of the nav_bar.
-  // We use translateX relative to the indicator's own width (which is 10% of nav_bar).
-  // To move 25% of nav_bar, we move 250% of indicator width.
-  const translateX = position.interpolate({
-    inputRange: [0, 1, 2, 3],
-    outputRange: [0, -250, -500, -750], 
-  });
-
+function CustomTabBar({ state, navigation }) {
   return (
     <View style={styles.nav_bar_container} pointerEvents="box-none">
       <View style={styles.nav_bar}>
-        {/* Animated Underline Indicator */}
-        <Animated.View 
-          style={[
-            styles.indicator, 
-            { transform: [{ translateX }] }
-          ]} 
-        />
-
         <TouchableOpacity
           style={styles.special_btn}
           onPress={() => navigation.navigate('NewPost')}
@@ -111,19 +92,9 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     paddingHorizontal: 5,
   },
-  indicator: {
-    position: 'absolute',
-    right: '7.5%', // Center of the first tab (Map)
-    width: '10%', // Narrower underline
-    height: 3, 
-    bottom: 8,
-    backgroundColor: 'white',
-    borderRadius: 2,
-  },
   tab_btn: {
     paddingVertical: 8,
     paddingHorizontal: 12,
-    zIndex: 2,
   },
   nav_text: {
     color: 'white',
@@ -133,7 +104,8 @@ const styles = StyleSheet.create({
   },
   active_nav_text: {
     opacity: 1,
-    // Removed textDecorationLine: 'underline'
+    textDecorationLine: 'underline',
+    fontWeight: 'bold', // Added bold for better visibility
   },
   special_btn: {
     backgroundColor: '#00b4d8',
@@ -145,8 +117,7 @@ const styles = StyleSheet.create({
     elevation: 4,
     shadowColor: "#000000",
     shadowOpacity: 0.2,
-    shadowRadius: 3,
-    zIndex: 2,
+    shadowRadius: 3
   },
   special_btn_text: {
     color: 'white',
