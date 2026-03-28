@@ -13,26 +13,23 @@ const Tab = createMaterialTopTabNavigator();
 function CustomTabBar({ state, navigation, position }) {
   const { routes } = state;
   
-  // Calculate the movement of the indicator
-  // Since we use flexDirection: 'row-reverse', the index 0 (Map) is on the right.
-  // We'll interpolate the position to move a highlight bar.
+  // Percentage-based calculation to ensure it works on all screen widths
+  // Each tab takes up roughly 25% of the nav_bar.
+  // We use translateX relative to the indicator's own width (which is 10% of nav_bar).
+  // To move 25% of nav_bar, we move 250% of indicator width.
   const translateX = position.interpolate({
     inputRange: [0, 1, 2, 3],
-    outputRange: [0, -1, -2, -3], // Normalized units
+    outputRange: [0, -250, -500, -750], 
   });
 
   return (
     <View style={styles.nav_bar_container} pointerEvents="box-none">
       <View style={styles.nav_bar}>
-        {/* Animated Background Indicator */}
+        {/* Animated Underline Indicator */}
         <Animated.View 
           style={[
             styles.indicator, 
-            { 
-              transform: [{ 
-                translateX: Animated.multiply(translateX, (Platform.OS === 'web' ? 75 : 85)) 
-              }] 
-            }
+            { transform: [{ translateX }] }
           ]} 
         />
 
@@ -116,10 +113,10 @@ const styles = StyleSheet.create({
   },
   indicator: {
     position: 'absolute',
-    right: '2%', // Align with the first tab
-    width: '23%',
-    height: 3, // Thin underline
-    bottom: 8, // Positioned at the bottom
+    right: '7.5%', // Center of the first tab (Map)
+    width: '10%', // Narrower underline
+    height: 3, 
+    bottom: 8,
     backgroundColor: 'white',
     borderRadius: 2,
   },
