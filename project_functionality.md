@@ -80,7 +80,21 @@ A unified fetch wrapper that handles:
 
 ---
 
-## 5. AI Integration (The Agent)
+## 5. Web-Specific Mobile Optimizations
+To provide a premium experience on mobile browsers, several architectural decisions were made for the `/web` layer:
+
+### 5.1 Viewport-Native Fixed Navigation
+Instead of complex height-locking, MoodMaps Web now uses a "Viewport-Native" strategy:
+- **Fixed Position Navigation**: The `CustomTabBar` uses `position: fixed` on the Web platform. This ensures the navigation bar is relative to the browser viewport, not the page content, making it persistently visible regardless of scrolling.
+- **Natural Browser Scrolling**: The `html` and `body` are no longer strictly locked, allowing the mobile browser to handle vertical scrolling naturally. This provides the standard "momentum" feel users expect from high-quality web mobile apps.
+
+### 5.2 Safe Area & Layout Parity
+- **Padding Clearance**: The Feed uses a large `paddingBottom: 140` to ensure the list content clears the floating navigation bar.
+- **Desktop Framing**: The `ResponsiveContainer` still enforces the 440px centered frame on desktop browsers, maintaining the premium "App-like" aesthetic across all devices.
+
+---
+
+## 6. AI Integration (The Agent)
 The "AI Agent" is the primary USP (Unique Selling Proposition) of MoodMaps.
 
 ### The Flow:

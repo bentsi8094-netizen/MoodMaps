@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useNavigation } from '@react-navigation/native';
 
@@ -77,8 +77,8 @@ export default function MainTabs() {
 
 const styles = StyleSheet.create({
   nav_bar_container: {
-    position: 'absolute',
-    bottom: 20, // Increased from 8 to clear mobile browser bars
+    position: Platform.OS === 'web' ? 'fixed' : 'absolute',
+    bottom: 20, 
     width: '100%',
     alignItems: 'center',
     zIndex: 1000

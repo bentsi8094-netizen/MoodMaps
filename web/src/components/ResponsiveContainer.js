@@ -8,66 +8,27 @@ const ResponsiveContainer = ({ children }) => {
 
   React.useEffect(() => {
     if (isWeb) {
-      // Inject global CSS to ensure full viewport height and prevent dual-scroll
+      // Simple global CSS for web to handle background and touch behavior
       const style = document.createElement('style');
       style.innerHTML = `
-        /* Ensure the root elements take up exactly 100% of the dynamic viewport */
-        html, body, #root, [data-contents="true"] {
-          height: 100% !important;
-          height: -webkit-fill-available !important; /* iOS specific fix */
-          height: 100dvh !important; 
-          margin: 0 !important;
-          padding: 0 !important;
-          overflow: hidden !important;
-          background-color: #000 !important;
-          display: flex !important;
-          flex-direction: column !important;
+        html, body {
+          background-color: #000;
+          margin: 0;
+          padding: 0;
+          /* Allow natural scrolling */
+          overflow-x: hidden;
+          -webkit-overflow-scrolling: touch;
         }
-
-        /* Prevent standard scrollbars on the root but allow them internally */
         #root {
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          bottom: 0 !important;
-        }
-
-        /* RN Web Modal portal root targeting */
-        body > div[style*="position: fixed"] {
-          display: flex !important;
-          justify-content: center !important;
-          align-items: center !important;
-          background-color: rgba(0,0,0,0.5) !important;
-          z-index: 9999 !important;
-        }
-
-        /* The actual modal container inside the portal */
-        body > div[style*="position: fixed"] > div:last-child {
-          max-width: 440px !important;
-          width: 100% !important;
-          margin: 0 auto !important;
-          position: relative !important;
-          left: auto !important;
-          right: auto !important;
-          height: 100% !important;
-          top: 0 !important;
-          border-radius: 0px !important;
-          overflow: hidden !important;
-          box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
-        }
-
-        /* Target role="dialog" variants */
-        [role="dialog"] {
-          max-width: 440px !important;
-          margin: 0 auto !important;
-          border-radius: 0px !important;
+          min-height: 100%;
+          display: flex;
+          flex-direction: column;
         }
       `;
       document.head.appendChild(style);
       return () => document.head.removeChild(style);
     }
-  }, [isWeb, isDesktop]);
+  }, [isWeb]);
 
   if (!isDesktop) {
     return <View style={styles.mobile_full}>{children}</View>;

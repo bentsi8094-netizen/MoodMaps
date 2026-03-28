@@ -106,15 +106,10 @@ export default function FeedScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: 'transparent',
-    height: '100%',
-    overflow: 'hidden' 
-  },
+  container: { flex: 1, backgroundColor: 'transparent' },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#00b4d8', marginTop: 15, fontWeight: '600', letterSpacing: 0.5 },
-  listContent: { paddingVertical: 20, paddingBottom: 110 },
+  listContent: { paddingVertical: 20, paddingBottom: 140 },
   emptyContainer: { marginTop: 120, alignItems: 'center', paddingHorizontal: 40 },
   emptyEmoji: { fontSize: 60, marginBottom: 20 },
   emptyText: { color: 'white', fontSize: 22, fontWeight: 'bold', marginBottom: 10 }
