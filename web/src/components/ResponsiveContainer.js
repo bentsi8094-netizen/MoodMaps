@@ -11,20 +11,26 @@ const ResponsiveContainer = ({ children }) => {
       // Inject global CSS to ensure full viewport height and prevent dual-scroll
       const style = document.createElement('style');
       style.innerHTML = `
-        html, body, #root {
+        /* Ensure the root elements take up exactly 100% of the dynamic viewport */
+        html, body, #root, [data-contents="true"] {
           height: 100% !important;
-          height: 100dvh !important; /* Use dynamic viewport height if supported */
+          height: -webkit-fill-available !important; /* iOS specific fix */
+          height: 100dvh !important; 
           margin: 0 !important;
           padding: 0 !important;
           overflow: hidden !important;
           background-color: #000 !important;
-        }
-
-        /* Ensure the main expo root container also fills height */
-        [data-contents="true"], .css-view-175oi2r {
-          height: 100% !important;
           display: flex !important;
           flex-direction: column !important;
+        }
+
+        /* Prevent standard scrollbars on the root but allow them internally */
+        #root {
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
         }
 
         /* RN Web Modal portal root targeting */
@@ -61,7 +67,7 @@ const ResponsiveContainer = ({ children }) => {
       document.head.appendChild(style);
       return () => document.head.removeChild(style);
     }
-  }, [isWeb]);
+  }, [isWeb, isDesktop]);
 
   if (!isDesktop) {
     return <View style={styles.mobile_full}>{children}</View>;

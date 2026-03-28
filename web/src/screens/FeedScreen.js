@@ -106,7 +106,12 @@ export default function FeedScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { 
+    flex: 1, 
+    backgroundColor: 'transparent',
+    height: '100%',
+    overflow: 'hidden' 
+  },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   loadingText: { color: '#00b4d8', marginTop: 15, fontWeight: '600', letterSpacing: 0.5 },
   listContent: { paddingVertical: 20, paddingBottom: 110 },
