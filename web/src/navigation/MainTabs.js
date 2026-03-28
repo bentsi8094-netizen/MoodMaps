@@ -37,7 +37,7 @@ function CustomTabBar({ state, navigation }) {
           onPress={() => navigation.navigate('Feed')}
           style={styles.tab_btn}
         >
-          <Text style={[styles.nav_text, (state.index === 0) && styles.active_nav_text]}>פיד</Text>
+          <Text style={[styles.nav_text, state.index === 1 && styles.active_nav_text]}>פיד</Text>
         </TouchableOpacity>
 
 
@@ -45,7 +45,7 @@ function CustomTabBar({ state, navigation }) {
           onPress={() => navigation.navigate('Map')}
           style={styles.tab_btn}
         >
-          <Text style={[styles.nav_text, state.index === 1 && styles.active_nav_text]}>מפה</Text>
+          <Text style={[styles.nav_text, state.index === 0 && styles.active_nav_text]}>מפה</Text>
         </TouchableOpacity>
 
       </View>
@@ -61,7 +61,7 @@ export default function MainTabs() {
       tabBar={props => <CustomTabBar {...props} />}
       style={{ backgroundColor: 'transparent' }}
       screenOptions={{
-        swipeEnabled: true,
+        swipeEnabled: true, // Re-enabled as requested by user
         animationEnabled: true,
         tabBarBounces: true,
       }}
@@ -78,21 +78,25 @@ export default function MainTabs() {
 const styles = StyleSheet.create({
   nav_bar_container: {
     position: 'absolute',
-    bottom: 8,
+    bottom: 20, // Increased from 8 to clear mobile browser bars
     width: '100%',
     alignItems: 'center',
     zIndex: 1000
   },
   nav_bar: {
     flexDirection: 'row-reverse',
-    width: '94%',
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: '90%', // Slightly narrower for cleaner look
+    height: 64, // Slightly taller
+    borderRadius: 32,
+    backgroundColor: 'rgba(25, 25, 30, 0.85)', // Darker, more glassmorphic
     justifyContent: 'space-around',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)'
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
   },
   tab_btn: {
     paddingVertical: 10,

@@ -8,15 +8,32 @@ const ResponsiveContainer = ({ children }) => {
 
   React.useEffect(() => {
     if (isWeb) {
-      // Inject global CSS to constrain portals (Modals) to the app frame width on desktop
+      // Inject global CSS to ensure full viewport height and prevent dual-scroll
       const style = document.createElement('style');
       style.innerHTML = `
+        html, body, #root {
+          height: 100% !important;
+          height: 100dvh !important; /* Use dynamic viewport height if supported */
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: hidden !important;
+          background-color: #000 !important;
+        }
+
+        /* Ensure the main expo root container also fills height */
+        [data-contents="true"], .css-view-175oi2r {
+          height: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+        }
+
         /* RN Web Modal portal root targeting */
         body > div[style*="position: fixed"] {
           display: flex !important;
           justify-content: center !important;
           align-items: center !important;
           background-color: rgba(0,0,0,0.5) !important;
+          z-index: 9999 !important;
         }
 
         /* The actual modal container inside the portal */

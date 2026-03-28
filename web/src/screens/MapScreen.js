@@ -140,11 +140,11 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: 'transparent', 
-    marginBottom: 106, 
-    borderRadius: 25, 
+    marginBottom: 100, // Adjusted for new floating nav bar
+    borderRadius: 20, 
     overflow: 'hidden', 
-    marginHorizontal: 18, 
-    marginTop: 10,
+    marginHorizontal: 12, 
+    marginTop: 8,
   },
   map: { 
     flex: 1,
