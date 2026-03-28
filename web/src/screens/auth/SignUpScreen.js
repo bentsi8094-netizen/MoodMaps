@@ -129,9 +129,16 @@ export default function SignUpScreen({ on_register }) {
             <View>
               <TextInput style={styles.input} placeholder="אימייל" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} placeholderTextColor="#ccc" value={form_data.email} onChangeText={(v) => update_field('email', v)} />
               <View style={styles.password_container}>
-                <TextInput style={[styles.input, { flex: 1, marginBottom: 0 }]} placeholder="סיסמה" secureTextEntry={!show_password} placeholderTextColor="#ccc" value={form_data.password} onChangeText={(v) => update_field('password', v)} />
+                <TextInput 
+                  style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0, backgroundColor: 'transparent' }]} 
+                  placeholder="סיסמה" 
+                  secureTextEntry={!show_password} 
+                  placeholderTextColor="#ccc" 
+                  value={form_data.password} 
+                  onChangeText={(v) => update_field('password', v)} 
+                />
                 <TouchableOpacity style={styles.eye_icon} onPress={() => set_show_password(!show_password)}>
-                  <Text style={{ fontSize: 24 }}>{show_password ? "👁️" : "🙈"}</Text>
+                  <Text style={{ fontSize: 22 }}>{show_password ? "👁️" : "🙈"}</Text>
                 </TouchableOpacity>
               </View>
               <View style={styles.row}>
@@ -189,8 +196,8 @@ const styles = StyleSheet.create({
   scroll_content: { paddingVertical: 20, paddingHorizontal: 0, flexGrow: 1, justifyContent: 'center' }, 
   step_indicator: { color: '#00b4d8', textAlign: 'center', marginBottom: 20, fontSize: 14, fontWeight: '600' },
   input: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 15, color: 'white', marginBottom: 15, textAlign: 'right' },
-  password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15 },
-  eye_icon: { width: 75, height: '100%', justifyContent: 'center', alignItems: 'center' },
+  password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  eye_icon: { width: 60, height: '100%', justifyContent: 'center', alignItems: 'center' },
   button: { backgroundColor: '#00b4d8', padding: 15, borderRadius: 12, alignItems: 'center', height: 55, justifyContent: 'center' },
   submit_btn: { backgroundColor: '#0077b6' },
   button_text: { color: 'white', fontWeight: 'bold', fontSize: 16 },
