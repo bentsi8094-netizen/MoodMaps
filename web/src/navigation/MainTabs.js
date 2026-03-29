@@ -65,7 +65,7 @@ export default function MainTabs() {
       tabBar={props => <CustomTabBar {...props} />}
       style={{ backgroundColor: 'transparent', flex: 1 }}
       screenOptions={{
-        swipeEnabled: false,
+        swipeEnabled: true,
         animationEnabled: true,
         tabBarBounces: true,
       }}
