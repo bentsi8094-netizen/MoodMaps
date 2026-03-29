@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text, StyleSheet, Platform } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useNavigation } from '@react-navigation/native';
 
@@ -11,8 +11,19 @@ import NewPostScreen from '../screens/NewPostScreen';
 const Tab = createMaterialTopTabNavigator();
 
 function CustomTabBar({ state, navigation }) {
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width > 600;
+  
+  const container_style = [
+    styles.nav_bar_container,
+    isDesktop && {
+      width: 440,
+      left: (width - 440) / 2
+    }
+  ];
+
   return (
-    <View style={styles.nav_bar_container} pointerEvents="box-none">
+    <View style={container_style} pointerEvents="box-none">
       <View style={styles.nav_bar}>
         <TouchableOpacity
           style={styles.special_btn}
