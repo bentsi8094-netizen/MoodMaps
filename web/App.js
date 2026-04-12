@@ -21,17 +21,22 @@ if (Platform.OS === 'web') {
   document.head.appendChild(style);
 }
 
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { useAppStore } from './src/store/useAppStore';
 import RootNavigator from './src/navigation/RootNavigator';
 import ResponsiveContainer from './src/components/ResponsiveContainer';
 
+const GOOGLE_CLIENT_ID = "958887131087-tpe7sa890b8dqodqvr88aqpp9bfl93ln.apps.googleusercontent.com";
+
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ResponsiveContainer>
-        <RootNavigator />
-      </ResponsiveContainer>
-    </SafeAreaProvider>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <SafeAreaProvider>
+        <ResponsiveContainer>
+          <RootNavigator />
+        </ResponsiveContainer>
+      </SafeAreaProvider>
+    </GoogleOAuthProvider>
   );
 }
 

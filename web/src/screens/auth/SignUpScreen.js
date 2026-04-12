@@ -12,7 +12,9 @@ import {
   Keyboard, 
   Platform 
 } from "react-native";
+import { GoogleLogin } from '@react-oauth/google';
 import GlassCard from "../../components/GlassCard";
+import ErrorText from "../../components/ErrorText";
 import { user_service } from "../../services/userService"; 
 import { pick_image } from "../../utils/imageHelper";
 import { generate_alias } from "../../utils/aliasGenerator";
@@ -25,6 +27,7 @@ export default function SignUpScreen({ on_register }) {
   const [form_data, set_form_data] = useState({
     first_name: "", last_name: "", email: "", password: "", user_alias: ""
   });
+  const [errors, set_errors] = useState({});
 
   const navigate_to_step = (next_step) => {
     Keyboard.dismiss();
@@ -49,20 +52,44 @@ export default function SignUpScreen({ on_register }) {
 
   const validate_current_step = () => {
     const { first_name, last_name, email, password } = form_data;
+    const current_errors = {};
+
     if (step === 1) {
-      if (first_name.trim().length < 2 || last_name.trim().length < 2) {
-        Alert.alert("שם חסר", "נא להזין שם תקין");
-        return false;
-      }
+      if (first_name.trim().length < 2) current_errors.first_name = "שם פרטי חייב להכיל לפחות 2 תווים";
+      if (last_name.trim().length < 2) current_errors.last_name = "שם משפחה חייב להכיל לפחות 2 תווים";
     }
+    
     if (step === 2) {
       const email_regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email_regex.test(email.trim()) || password.length < 6) {
-        Alert.alert("פרטים לא תקינים", "בדוק אימייל או אורך סיסמה");
-        return false;
-      }
+      if (!email_regex.test(email.trim())) current_errors.email = "כתובת אימייל לא תקינה";
+      if (password.length < 6) current_errors.password = "סיסמה חייבת להכיל לפחות 6 תווים";
     }
-    return true;
+
+    set_errors(current_errors);
+    return Object.keys(current_errors).length === 0;
+  };
+
+  const handle_google_success = (credentialResponse) => {
+    try {
+      const token = credentialResponse.credential;
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const payload = JSON.parse(window.atob(base64));
+      
+      set_form_data({
+        ...form_data,
+        email: payload.email,
+        first_name: payload.given_name || "",
+        last_name: payload.family_name || "",
+        password: "GOOGLE_AUTH_SERVICE" // Placeholder for social login
+      });
+      
+      // Auto-advance to final step for image and alias
+      set_errors({});
+      set_step(3);
+    } catch (error) {
+      set_errors({ general: "נכשלה גישה לנתוני גוגל" });
+    }
   };
 
   const handle_submit = async () => {
@@ -78,16 +105,17 @@ export default function SignUpScreen({ on_register }) {
       data.append('user_alias', form_data.user_alias.trim());
 
       const file_name = image_uri.split('/').pop() || 'profile.jpg';
+      const safe_file_name = file_name.includes('.') ? file_name : `${file_name}.jpg`;
       
       if (Platform.OS === 'web') {
         const response = await fetch(image_uri);
         const blob = await response.blob();
-        data.append('profile_image', blob, file_name);
+        data.append('profile_image', blob, safe_file_name);
       } else {
         data.append('profile_image', {
           uri: Platform.OS === 'ios' ? image_uri.replace('file://', '') : image_uri,
-          name: file_name,
-          type: `image/${file_name.split('.').pop() || 'jpeg'}`
+          name: safe_file_name,
+          type: `image/${safe_file_name.split('.').pop() || 'jpeg'}`
         });
       }
 
@@ -95,7 +123,7 @@ export default function SignUpScreen({ on_register }) {
       if (response.success) {
         on_register(response.user, response.token);
       } else {
-        Alert.alert("רישום נכשל", response.error || "פרטי הרישום תפוסים");
+        set_errors({ general: response.error || "רישום נכשל" });
       }
     } catch (err) {
       Alert.alert("שגיאת תקשורת", "החיבור לשרת נכשל.");
@@ -118,16 +146,41 @@ export default function SignUpScreen({ on_register }) {
           {step === 1 && (
             <View>
               <TextInput style={styles.input} placeholder="שם פרטי" placeholderTextColor="#ccc" value={form_data.first_name} onChangeText={(v) => update_field('first_name', v)} />
+              <ErrorText error={errors.first_name} />
+              
               <TextInput style={styles.input} placeholder="שם משפחה" placeholderTextColor="#ccc" value={form_data.last_name} onChangeText={(v) => update_field('last_name', v)} />
+              <ErrorText error={errors.last_name} />
+
               <TouchableOpacity style={styles.button} onPress={() => validate_current_step() && navigate_to_step(2)}>
                 <Text style={styles.button_text}>המשך</Text>
               </TouchableOpacity>
+
+              <View style={styles.separator}>
+                <View style={styles.line} />
+                <Text style={styles.separator_text}>או</Text>
+                <View style={styles.line} />
+              </View>
+
+              <View style={styles.google_btn_wrapper}>
+                <GoogleLogin
+                  onSuccess={handle_google_success}
+                  onError={() => set_errors({ general: 'התחברות עם גוגל נכשלה' })}
+                  useOneTap
+                  theme="filled_blue"
+                  shape="pill"
+                  text="signup_with"
+                  locale="he"
+                  width="100%"
+                />
+              </View>
             </View>
           )}
 
           {step === 2 && (
             <View>
               <TextInput style={styles.input} placeholder="אימייל" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} placeholderTextColor="#ccc" value={form_data.email} onChangeText={(v) => update_field('email', v)} />
+              <ErrorText error={errors.email} />
+
               <View style={styles.password_container}>
                 <TouchableOpacity style={styles.eye_icon} onPress={() => set_show_password(!show_password)}>
                   <Text style={{ fontSize: 22 }}>{show_password ? "👁️" : "🙈"}</Text>
@@ -141,6 +194,7 @@ export default function SignUpScreen({ on_register }) {
                   onChangeText={(v) => update_field('password', v)} 
                 />
               </View>
+              <ErrorText error={errors.password} />
               <View style={styles.row}>
                 <TouchableOpacity style={[styles.button, styles.back_btn]} onPress={() => navigate_to_step(1)}>
                   <Text style={styles.button_text}>חזור</Text>
@@ -210,5 +264,9 @@ const styles = StyleSheet.create({
   media_btn: { backgroundColor: 'rgba(0,180,216,0.1)', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 15, borderWidth: 1, borderColor: '#00b4d8' },
   media_btn_text: { color: '#00b4d8', fontSize: 12, fontWeight: 'bold' },
   alias_refresh: { alignSelf: 'center', padding: 5, marginBottom: 10 },
-  alias_refresh_text: { color: '#00b4d8', fontSize: 13, textDecorationLine: 'underline' }
+  alias_refresh_text: { color: '#00b4d8', fontSize: 13, textDecorationLine: 'underline' },
+  separator: { flexDirection: 'row', alignItems: 'center', marginVertical: 20 },
+  line: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.2)' },
+  separator_text: { color: 'rgba(255,255,255,0.5)', marginHorizontal: 10, fontSize: 14 },
+  google_btn_wrapper: { alignItems: 'center', marginTop: 5, width: '100%' }
 });
