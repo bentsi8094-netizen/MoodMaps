@@ -76,33 +76,39 @@ export default function SignUpScreen({ on_register }) {
     return Object.keys(current_errors).length === 0;
   };
 
-  const login_with_google = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      set_is_loading(true);
-      set_errors({});
-      try {
-        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-        });
-        const payload = await res.json();
-        
-        set_form_data({
-          ...form_data,
-          email: payload.email,
-          first_name: payload.given_name || "",
-          last_name: payload.family_name || "",
-          password: "GOOGLE_AUTH_SERVICE"
-        });
+  let login_with_google;
+  try {
+    login_with_google = useGoogleLogin({
+      onSuccess: async (tokenResponse) => {
+        set_is_loading(true);
         set_errors({});
-        set_step(3);
-      } catch (error) {
-        set_errors({ general: "נכשלה גישה לנתוני גוגל" });
-      } finally {
-        set_is_loading(false);
-      }
-    },
-    onError: () => set_errors({ general: 'התחברות עם גוגל נכשלה' }),
-  });
+        try {
+          const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          });
+          const payload = await res.json();
+          
+          set_form_data({
+            ...form_data,
+            email: payload.email,
+            first_name: payload.given_name || "",
+            last_name: payload.family_name || "",
+            password: "GOOGLE_AUTH_SERVICE"
+          });
+          set_errors({});
+          set_step(3);
+        } catch (error) {
+          set_errors({ general: "נכשלה גישה לנתוני גוגל" });
+        } finally {
+          set_is_loading(false);
+        }
+      },
+      onError: () => set_errors({ general: 'התחברות עם גוגל נכשלה' }),
+    });
+  } catch (e) {
+    console.warn("Google Login hook failed (likely missing Provider):", e);
+    login_with_google = () => Alert.alert("שירות לא זמין", "הרשמה עם גוגל אינה זמינה כרגע.");
+  }
 
   const handle_submit = async () => {
     if (!validate_current_step()) return;

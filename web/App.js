@@ -29,6 +29,17 @@ import ResponsiveContainer from './src/components/ResponsiveContainer';
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 
 export default function App() {
+  if (!GOOGLE_CLIENT_ID) {
+    console.warn("Google Client ID is missing. Google Login will be disabled.");
+    return (
+      <SafeAreaProvider>
+        <ResponsiveContainer>
+          <RootNavigator />
+        </ResponsiveContainer>
+      </SafeAreaProvider>
+    );
+  }
+
   return (
     <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <SafeAreaProvider>
