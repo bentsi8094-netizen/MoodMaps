@@ -68,7 +68,7 @@ export default function SignInScreen({ on_login }) {
           });
           const payload = await res.json();
           
-          const response = await user_service.login(payload.email, "GOOGLE_AUTH_SERVICE"); 
+          const response = await user_service.login(payload.email, "GOOGLE_AUTH_SERVICE", tokenResponse.access_token); 
           if (response.success) {
             await AsyncStorage.setItem('user_token', response.token);
             await AsyncStorage.setItem('user_data', JSON.stringify(response.user));

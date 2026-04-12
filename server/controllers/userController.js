@@ -96,7 +96,29 @@ const login = async (req, res) => {
         }
 
         const is_match = await bcrypt.compare(password, auth_data.password_hash);
-        if (!is_match) {
+        
+        // אבטחה מחמירה: אם המשתמש מנסה להיכנס עם "סיסמה סטטית" של גוגל, 
+        // אנחנו דורשים אימות חי מול גוגל בשרת.
+        if (password === "GOOGLE_AUTH_SERVICE") {
+            const google_token = req.body.google_token;
+            if (!google_token) {
+                return res.status(401).json({ success: false, error: "חסר טוקן אימות של גוגל" });
+            }
+            
+            try {
+                // אימות הטוקן מול שרת גוגל (כירורגי ומאובטח)
+                const axios = require('axios');
+                const gRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo`, {
+                    headers: { Authorization: `Bearer ${google_token}` }
+                });
+                
+                if (gRes.data.email.toLowerCase() !== clean_email) {
+                    return res.status(401).json({ success: false, error: "אימות גוגל נכשל - מייל לא תואם" });
+                }
+            } catch (err) {
+                return res.status(401).json({ success: false, error: "טוקן גוגל פג תוקף או לא תקין" });
+            }
+        } else if (!is_match) {
             return res.status(400).json({ success: false, error: "פרטי התחברות שגויים" });
         }
 

@@ -8,8 +8,12 @@ const normalize_user = (result) => {
 };
 
 export const user_service = {
-  login: async (email, password) => {
-    const result = await api_client.post('/api/users/login', { email, password });
+  login: async (email, password, google_token = null) => {
+    const result = await api_client.post('/api/users/login', { 
+        email, 
+        password, 
+        google_token 
+    });
     return normalize_user(result);
   },
 

@@ -107,7 +107,6 @@ The "AI Agent" is the primary USP (Unique Selling Proposition) of MoodMaps.
 5.  **Finalization**: The user previews the sticker and "publishes" the update, which hits `/api/posts/update-active`.
 
 ---
-
 ## 6. Key Features & Logic
 
 ### Sliding 24h Session Window

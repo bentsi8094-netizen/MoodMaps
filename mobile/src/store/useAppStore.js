@@ -69,7 +69,7 @@ export const useAppStore = create(
         } catch (e) {
           console.error("[Store] Login Error:", e.message);
         } finally {
-          setTimeout(() => set({ is_loading_user: false }), 250);
+          set({ is_loading_user: false });
         }
       },
 
@@ -89,7 +89,7 @@ export const useAppStore = create(
         } catch (e) {
           console.error("[Store] Logout Error:", e.message);
         } finally {
-          setTimeout(() => set({ is_loading_user: false }), 250);
+          set({ is_loading_user: false });
         }
       },
 
