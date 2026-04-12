@@ -64,6 +64,8 @@ export const useAppStore = create(
             update_api_token(token);
             await AsyncStorage.setItem('user_token', token);
           }
+          
+          // Execute data fetching after token is guaranteed to be set
           await Promise.all([
             get().fetch_posts(),
             get().sync_active_session(),

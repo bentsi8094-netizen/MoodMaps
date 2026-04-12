@@ -19,11 +19,15 @@ const ErrorText = ({ error }) => {
 const styles = StyleSheet.create({
   error: {
     color: '#ff4d4d',
-    fontSize: 12,
-    marginBottom: 8,
-    marginRight: 5,
-    fontWeight: '500',
-    textAlign: 'right'
+    fontSize: 11,
+    marginTop: -10,
+    marginBottom: 10,
+    marginRight: 10,
+    fontWeight: '600',
+    textAlign: 'right',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 1,
   }
 });
 

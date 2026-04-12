@@ -43,6 +43,7 @@ const request = async (endpoint, options = {}) => {
     clearTimeout(timeout_id);
     
     if (response.status === 401) {
+      console.warn(`[API Client] 401 Unauthorized for ${endpoint}. Triggering logout.`);
       cached_token = null;
       await AsyncStorage.removeItem('user_token');
       

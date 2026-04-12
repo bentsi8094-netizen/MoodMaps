@@ -99,7 +99,7 @@ export default function RootNavigator() {
 
   if (Platform.OS === 'web') {
     return (
-      <View style={[styles.full_screen, { backgroundColor: 'transparent', height: '100%' }]}>
+      <View style={[styles.full_screen, { backgroundColor: '#192f6a', height: '100%' }]}>
         <StatusBar barStyle="light-content" />
         <LinearGradient 
           colors={current_user ? ['#00b4d8', '#9d4edd', '#f72585'] : ['#4c669f', '#3b5998', '#192f6a']} 
