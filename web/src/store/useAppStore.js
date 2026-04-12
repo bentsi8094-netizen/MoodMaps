@@ -39,14 +39,17 @@ export const useAppStore = create(
           if (token) {
             update_api_token(token);
             const response = await user_service.get_profile();
-            if (response?.success && response.user) {
-              set({ current_user: normalize_user_data(response.user) });
-              await Promise.all([
-                get().fetch_posts(),
-                get().sync_active_session(),
-                get().refresh_locations(true)
-              ]);
-            }
+              if (response?.success && response.user) {
+                const normalizedUser = normalize_user_data(response.user);
+                if (normalizedUser) {
+                  set({ current_user: normalizedUser });
+                  await Promise.all([
+                    get().fetch_posts(),
+                    get().sync_active_session(),
+                    get().refresh_locations(true)
+                  ]);
+                }
+              }
           }
         } catch (e) {
           console.error("[Store] Init Auth Error:", e.message);

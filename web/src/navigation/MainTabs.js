@@ -58,6 +58,44 @@ function CustomTabBar({ state, navigation }) {
 }
 
 export default function MainTabs() {
+  const [activeTab, setActiveTab] = React.useState('Feed');
+
+  if (Platform.OS === 'web') {
+    const renderScreen = () => {
+      switch (activeTab) {
+        case 'Map': return <MapScreen />;
+        case 'Feed': return <FeedScreen />;
+        case 'MyPosts': return <MyPostsScreen />;
+        case 'NewPost': return <NewPostScreen />;
+        default: return <FeedScreen />;
+      }
+    };
+
+    const getTabIndex = () => {
+      switch (activeTab) {
+        case 'Map': return 0;
+        case 'Feed': return 1;
+        case 'MyPosts': return 2;
+        case 'NewPost': return 3;
+        default: return 1;
+      }
+    };
+
+    return (
+      <View style={{ flex: 1, backgroundColor: 'transparent' }}>
+        <View style={{ flex: 1 }}>
+          {renderScreen()}
+        </View>
+        <CustomTabBar 
+          state={{ index: getTabIndex() }} 
+          navigation={{ 
+            navigate: (name) => setActiveTab(name) 
+          }} 
+        />
+      </View>
+    );
+  }
+
   return (
     <Tab.Navigator
       initialRouteName="Feed"

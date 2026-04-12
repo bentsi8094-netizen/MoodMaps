@@ -48,6 +48,15 @@ export default function FeedScreen({ route, navigation }) {
   }, [target_post_id, active_posts, find_post_index, navigation]); 
 
   const render_item = useCallback(({ item, index }) => {
+    // Disable animations on web to prevent crashes with React 19/experimental RN
+    if (Platform.OS === 'web') {
+      return (
+        <View style={{ width: '100%', opacity: 1 }}>
+          <FeedCard post={item} />
+        </View>
+      );
+    }
+    
     return (
       <Animatable.View 
         animation={index < 5 ? "fadeInUp" : undefined} 
@@ -64,9 +73,9 @@ export default function FeedScreen({ route, navigation }) {
       {is_loading && active_posts.length === 0 ? (
         <View style={styles.center}>
           <ActivityIndicator size="large" color="#00b4d8" />
-          <Animatable.Text animation="pulse" iterationCount="infinite" style={styles.loadingText}>
+          <Text style={styles.loadingText}>
             מסנכרן מודים מהסביבה...
-          </Animatable.Text>
+          </Text>
         </View>
       ) : (
         <FlatList

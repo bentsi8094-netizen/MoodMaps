@@ -29,6 +29,24 @@ function AppHeader() {
   const logout_user = useAppStore(state => state.logout_user);
   const is_logging_out = useRef(false);
 
+  const normalize_user_data = (raw_data) => {
+    if (!raw_data) return null;
+    try {
+      return {
+        id: String(raw_data._id || raw_data.id || "unknown"),
+        first_name: raw_data.first_name || "משתמש",
+        user_alias: raw_data.user_alias || raw_data.email?.split('@')[0] || "אנונימי",
+        email: raw_data.email || "",
+        mood: raw_data.mood || raw_data.active_emoji || "😀",
+        sticker_url: raw_data.sticker_url || null,
+        avatar_url: raw_data.avatar_url || raw_data.profile_image || null
+      };
+    } catch (e) {
+      console.error("[Store] Normalization failed:", e);
+      return null;
+    }
+  };
+
   const handle_logout = useCallback(async () => {
     if (is_logging_out.current) return;
     is_logging_out.current = true;
@@ -39,9 +57,10 @@ function AppHeader() {
     }
   }, [logout_user]);
 
-  const display_name = (current_user?.first_name && current_user.first_name !== "משתמש") 
-                        ? current_user.first_name 
-                        : (current_user?.user_alias || "חבר");
+  const user = normalize_user_data(current_user);
+  const display_name = (user?.first_name && user.first_name !== "משתמש") 
+                        ? user.first_name 
+                        : (user?.user_alias || "חבר");
 
   return (
     <View style={styles.top_header}>
@@ -99,9 +118,10 @@ export default function RootNavigator() {
 
   if (Platform.OS === 'web') {
     return (
-      <View style={[styles.full_screen, { backgroundColor: '#192f6a', height: '100%' }]}>
+      <View style={{ flex: 1, backgroundColor: '#0a0a0b', width: '100%', height: '100vh' }}>
         <StatusBar barStyle="light-content" />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: current_user ? '#9d4edd' : '#3b5998' }]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: current_user ? '#9d4edd' : '#4c669f' }]} />
+        {/* Only try Gradient if user is logged in for extra safety */}
         <LinearGradient 
           colors={current_user ? ['#00b4d8', '#9d4edd', '#f72585'] : ['#4c669f', '#3b5998', '#192f6a']} 
           style={StyleSheet.absoluteFill} 
@@ -111,13 +131,7 @@ export default function RootNavigator() {
             screenOptions={{ 
               headerShown: false, 
               animationEnabled: false, 
-              detachPreviousScreen: false,
-              gestureEnabled: false, 
-              cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
-              cardStyle: { 
-                backgroundColor: 'transparent',
-                flex: 1,
-              } 
+              cardStyle: { backgroundColor: 'transparent', flex: 1 } 
             }}
           >
             {!current_user ? (

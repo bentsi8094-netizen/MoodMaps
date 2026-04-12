@@ -20,12 +20,7 @@ const UserMarker = memo(({ user, is_me, onPress, map }) => {
       zIndex={is_me ? 999 : 1}
     >
       <View style={styles.marker_wrapper}>
-        <Animatable.View
-          animation={is_me ? "pulse" : undefined}
-          iterationCount={is_me ? "infinite" : 1}
-          duration={2000}
-          style={[styles.marker_container, is_me && styles.my_marker_container]}
-        >
+        <View style={[styles.marker_container, is_me && styles.my_marker_container]}>
           {user.sticker_url ? (
             <Image 
               source={{ uri: user.sticker_url }} 
@@ -33,16 +28,11 @@ const UserMarker = memo(({ user, is_me, onPress, map }) => {
               contentFit="contain"
             />
           ) : (
-            <Animatable.Text 
-              animation={is_me ? "swing" : undefined} 
-              iterationCount={is_me ? "infinite" : 1} 
-              duration={2500}
-              style={styles.marker_emoji}
-            >
+            <Text style={styles.marker_emoji}>
               {user.active_emoji || user.emoji || '📍'}
-            </Animatable.Text>
+            </Text>
           )}
-        </Animatable.View>
+        </View>
       </View>
     </Marker>
   );
