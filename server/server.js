@@ -44,7 +44,23 @@ app.use((req, res) => {
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n--- 🚀 MOODMAPS SERVER STARTED ---`);
     console.log(`📍 PORT: ${PORT}`);
-    console.log(`📍 AI Engine: GPT-4o-mini`);
+    
+    // Safety Check for Environment Variables
+    const critical_vars = [
+        'JWT_SECRET', 
+        'SUPABASE_URL', 
+        'SUPABASE_KEY', 
+        'CLOUDINARY_CLOUD_NAME',
+        'OPENAI_API_KEY'
+    ];
+    
+    console.log(`\n📋 Environment Check:`);
+    critical_vars.forEach(v => {
+        const is_loaded = process.env[v] ? "✅ Loaded" : "❌ Missing";
+        console.log(`   ${v.padEnd(22)}: ${is_loaded}`);
+    });
+
+    console.log(`\n📍 AI Engine: GPT-4o-mini`);
     console.log(`📍 Database: Supabase + Cloudinary`);
     console.log(`----------------------------------\n`);
 });
