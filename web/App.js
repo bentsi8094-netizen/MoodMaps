@@ -26,7 +26,7 @@ import { useAppStore } from './src/store/useAppStore';
 import RootNavigator from './src/navigation/RootNavigator';
 import ResponsiveContainer from './src/components/ResponsiveContainer';
 
-const GOOGLE_CLIENT_ID = "958887131087-tpe7sa890b8dqodqvr88aqpp9bfl93ln.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 
 export default function App() {
   return (
