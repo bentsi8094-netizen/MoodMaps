@@ -109,23 +109,17 @@ export default function RootNavigator() {
 
   if (is_loading) {
     return (
-      <View style={styles.center_container}>
-        <LinearGradient colors={['#4c669f', '#3b5998', '#192f6a']} style={StyleSheet.absoluteFill} />
+      <View style={[styles.center_container, { backgroundColor: '#192f6a' }]}>
+        {Platform.OS !== 'web' && <LinearGradient colors={['#4c669f', '#3b5998', '#192f6a']} style={StyleSheet.absoluteFill} />}
         <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
   }
 
   if (Platform.OS === 'web') {
+    console.log("[Navigator] Mounting Web. User:", current_user ? "Logged In" : "Guest");
     return (
-      <View style={{ flex: 1, backgroundColor: '#0a0a0b', width: '100%', height: '100vh' }}>
-        <StatusBar barStyle="light-content" />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: current_user ? '#9d4edd' : '#4c669f' }]} />
-        {/* Only try Gradient if user is logged in for extra safety */}
-        <LinearGradient 
-          colors={current_user ? ['#00b4d8', '#9d4edd', '#f72585'] : ['#4c669f', '#3b5998', '#192f6a']} 
-          style={StyleSheet.absoluteFill} 
-        />
+      <View style={{ flex: 1, backgroundColor: '#192f6a', width: '100%', height: '100vh' }}>
         <NavigationContainer theme={TransparentTheme}>
           <Stack.Navigator 
             screenOptions={{ 

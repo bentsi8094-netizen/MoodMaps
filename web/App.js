@@ -36,6 +36,7 @@ class ErrorBoundary extends Component {
 
 // Force Global Monitoring and Styles on Web
 if (Platform.OS === 'web') {
+  console.log("--- MOODMAPS WEB STARTING ---");
   window.addEventListener('error', (event) => {
     console.error("[Web Global Error]:", event.error);
   });
@@ -48,10 +49,8 @@ if (Platform.OS === 'web') {
       margin: 0;
       padding: 0;
       overflow: hidden;
-      background-color: #0a0a0b;
+      background-color: #192f6a !important; /* Force Navy background early */
     }
-    /* Disable all animations on Web for extreme stability if needed */
-    * { transition: none !important; }
   `;
   document.head.appendChild(style);
 }
