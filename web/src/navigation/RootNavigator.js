@@ -101,6 +101,7 @@ export default function RootNavigator() {
     return (
       <View style={[styles.full_screen, { backgroundColor: '#192f6a', height: '100%' }]}>
         <StatusBar barStyle="light-content" />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: current_user ? '#9d4edd' : '#3b5998' }]} />
         <LinearGradient 
           colors={current_user ? ['#00b4d8', '#9d4edd', '#f72585'] : ['#4c669f', '#3b5998', '#192f6a']} 
           style={StyleSheet.absoluteFill} 

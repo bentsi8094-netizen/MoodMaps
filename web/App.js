@@ -3,20 +3,25 @@ import { registerRootComponent } from 'expo';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Platform } from 'react-native';
 
-// Force Light Mode on Web
+// Force Global Monitoring and Styles on Web
 if (Platform.OS === 'web') {
+  window.addEventListener('error', (event) => {
+    console.error("[Web Critical Error]:", event.error);
+  });
+
   const style = document.createElement('style');
   style.textContent = `
-    html, body {
-      color-scheme: light !important;
+    html, body, #root {
+      height: 100vh !important;
+      width: 100vw !important;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background-color: #000;
     }
-    /* Hide Google Maps extra UI on Web */
-    .gm-style-cc, .gmnoprint, .gm-style-mtc {
-      display: none !important;
-    }
-    a[href^="https://maps.google.com/maps"] {
-      display: none !important;
-    }
+    /* Hide Google Maps extra UI */
+    .gm-style-cc, .gmnoprint, .gm-style-mtc { display: none !important; }
+    a[href^="https://maps.google.com/maps"] { display: none !important; }
   `;
   document.head.appendChild(style);
 }

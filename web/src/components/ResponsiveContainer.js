@@ -15,12 +15,14 @@ const ResponsiveContainer = ({ children }) => {
           background-color: #000;
           margin: 0;
           padding: 0;
-          /* Allow natural scrolling */
-          overflow-x: hidden;
-          -webkit-overflow-scrolling: touch;
+          height: 100%;
+          min-height: 100%;
+          width: 100%;
+          overflow: hidden;
         }
         #root {
-          min-height: 100%;
+          height: 100%;
+          width: 100%;
           display: flex;
           flex-direction: column;
         }
