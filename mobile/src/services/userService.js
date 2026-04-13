@@ -2,7 +2,7 @@ import { api_client } from './apiClient';
 
 const normalize_user = (result) => {
   if (result.success && result.user) {
-    result.user.id = result.user._id || result.user.id;
+    result.user.id = String(result.user._id || result.user.id || "");
   }
   return result;
 };
@@ -34,7 +34,19 @@ export const user_service = {
     api_client.post('/api/users/update-mood', { 
       last_mood, 
       last_sticker_url: last_sticker_url || null 
-    })
+    }),
+
+  update_push_token: (token) => 
+    api_client.post('/api/users/update-push-token', { token }),
+
+  update_profile: (data) =>
+    api_client.put('/api/users/update-profile', data),
+
+  get_notifications: () =>
+    api_client.get('/api/users/notifications'),
+
+  mark_notification_read: (id) =>
+    api_client.put(`/api/users/notifications/${id}/read`)
 };
 
 export default user_service;

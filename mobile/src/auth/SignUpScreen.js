@@ -17,6 +17,12 @@ import ErrorText from "../components/ErrorText";
 import { user_service } from "../services/userService"; 
 import { pick_image } from "../utils/imageHelper";
 import { generate_alias } from "../utils/aliasGenerator";
+import { 
+  validate_email, 
+  validate_password, 
+  validate_name, 
+  validate_alias 
+} from "../utils/validationHelper";
 
 export default function SignUpScreen({ on_register }) {
   const [step, set_step] = useState(1);
@@ -73,19 +79,23 @@ export default function SignUpScreen({ on_register }) {
     const current_errors = {};
 
     if (step === 1) {
-      if (first_name.trim().length < 2) current_errors.first_name = "שם פרטי חייב להכיל לפחות 2 תווים";
-      if (last_name.trim().length < 2) current_errors.last_name = "שם משפחה חייב להכיל לפחות 2 תווים";
+      const first_name_err = validate_name(first_name, 'first');
+      const last_name_err = validate_name(last_name, 'last');
+      if (first_name_err) current_errors.first_name = first_name_err;
+      if (last_name_err) current_errors.last_name = last_name_err;
     }
     
     if (step === 2) {
-      const email_regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email_regex.test(email.trim())) current_errors.email = "כתובת אימייל לא תקינה";
-      if (password.length < 6) current_errors.password = "סיסמה חייבת להכיל לפחות 6 תווים";
+      const email_err = validate_email(email);
+      const password_err = validate_password(password);
+      if (email_err) current_errors.email = email_err;
+      if (password_err) current_errors.password = password_err;
     }
 
     if (step === 3) {
       if (!image_uri) current_errors.profile_image = "חובה להעלות תמונה";
-      if (form_data.user_alias.length < 3) current_errors.user_alias = "כינוי חייב להכיל לפחות 3 תווים";
+      const alias_err = validate_alias(form_data.user_alias);
+      if (alias_err) current_errors.user_alias = alias_err;
     }
 
     set_errors(current_errors);

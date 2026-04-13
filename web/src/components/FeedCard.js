@@ -1,6 +1,7 @@
 import React, { useMemo, useState, memo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
+import { useAppStore } from '../store/useAppStore';
 import GlassCard from './GlassCard';
 import CommentsModal from './CommentsModal';
 
@@ -28,6 +29,13 @@ const FeedCard = ({ post }) => {
   const sticker = post.sticker_url;
   const avatar_url = post.avatar_url; 
   const session_id = post.session_id?.toString() || post.id?.toString();
+  const target_session_id = useAppStore(state => state.target_session_id);
+
+  useEffect(() => {
+    if (target_session_id && target_session_id === session_id) {
+      set_comments_visible(true);
+    }
+  }, [target_session_id, session_id]);
 
   return (
     <View style={styles.outer_container}>
@@ -39,7 +47,10 @@ const FeedCard = ({ post }) => {
               <Text style={styles.time}>{formatted_time}</Text>
             </View>
             
-            <View style={styles.avatar_wrapper}>
+            <TouchableOpacity 
+              style={styles.avatar_wrapper}
+              onPress={() => avatar_url && useAppStore.getState().open_viewer(avatar_url)}
+            >
               {avatar_url ? (
                 <Image 
                   source={{ uri: avatar_url }} 
@@ -55,7 +66,7 @@ const FeedCard = ({ post }) => {
                   </Text>
                 </View>
               )}
-            </View>
+            </TouchableOpacity>
           </View>
         </View>
 

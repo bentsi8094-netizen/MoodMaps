@@ -2,6 +2,10 @@ const supabase = require('../config/supabaseClient');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+/**
+ * מנהל רישום משתמש חדש
+ * כולל ולידציה, הצפנת סיסמה, ויצירת פרופיל עם תמונה
+ */
 const register = async (req, res) => {
     const { first_name, last_name, email, password, user_alias } = req.body;
     const avatar_url = req.file ? req.file.path : null;
@@ -23,7 +27,7 @@ const register = async (req, res) => {
 
         const clean_email = email.trim().toLowerCase();
 
-        // בדיקה אם המייל קיים
+        // בדיקה אם המייל קיים במערכת
         const { data: existing_user } = await supabase
             .from('auth_manual')
             .select('id')
@@ -37,19 +41,23 @@ const register = async (req, res) => {
             });
         }
 
+        // הצפנת סיסמה
         const salt = await bcrypt.genSalt(10);
         const hashed_password = await bcrypt.hash(password, salt);
 
-        // יצירת רשומת אבטחה
+        // 1. יצירת רשומת אבטחה בטבלת auth_manual
         const { data: auth_user, error: auth_error } = await supabase
             .from('auth_manual')
             .insert([{ email: clean_email, password_hash: hashed_password }])
             .select('id')
             .single();
 
-        if (auth_error) throw auth_error;
+        if (auth_error) {
+            console.error("[User Controller] Auth Creation Failed:", auth_error.message);
+            throw new Error("נכשלה יצירת חשבון אבטחה");
+        }
 
-        // יצירת פרופיל משתמש
+        // 2. יצירת פרופיל משתמש בטבלת profiles
         const { data: new_profile, error: profile_error } = await supabase
             .from('profiles')
             .insert([{
@@ -63,7 +71,8 @@ const register = async (req, res) => {
             .single();
 
         if (profile_error) {
-            // אם הפרופיל נכשל, נמחק את רשומת ה-auth כדי למנוע יתמות
+            // Rollback מיידי: מחיקת ה-auth אם יצירת הפרופיל נכשלה כדי לא לחסום את המייל
+            console.warn("[User Controller] Profile Creation Failed, rolling back Auth...");
             await supabase.from('auth_manual').delete().eq('id', auth_user.id);
             
             if (profile_error.code === '23505') {
@@ -75,6 +84,7 @@ const register = async (req, res) => {
             throw profile_error;
         }
 
+        // יצירת טוקן JWT
         const token = jwt.sign(
             { id: auth_user.id, user_alias: new_profile.user_alias },
             process.env.JWT_SECRET,
@@ -88,15 +98,18 @@ const register = async (req, res) => {
         });
 
     } catch (err) {
-        console.error("Register Error:", err.message);
+        console.error("[User Controller] Register Error:", err.message);
         res.status(500).json({ 
             success: false, 
-            error: "שגיאה פנימית בתהליך ההרשמה",
-            details: err.message // עוזר לאיתור בעיות בזמן אמת
+            error: "שגיאה פנימית בתהליך ההרשמה"
         });
     }
 };
 
+/**
+ * מנהל התחברות משתמש קיים
+ * תומך בהתחברות רגילה ובהתחברות דרך גוגל
+ */
 const login = async (req, res) => {
     const { email, password } = req.body;
     const errors = {};
@@ -111,6 +124,7 @@ const login = async (req, res) => {
 
         const clean_email = email.trim().toLowerCase();
         
+        // שליפת נתוני אבטחה
         const { data: auth_data, error: auth_error } = await supabase
             .from('auth_manual')
             .select('id, email, password_hash')
@@ -118,13 +132,14 @@ const login = async (req, res) => {
             .maybeSingle();
 
         if (!auth_data || auth_error) {
-            return res.status(400).json({ 
+            return res.status(401).json({ 
                 success: false, 
                 error: "פרטי התחברות שגויים",
                 errors: { general: "המייל או הסיסמה אינם תואמים" }
             });
         }
 
+        // בדיקת סיסמה (או אימות גוגל)
         const is_match = await bcrypt.compare(password, auth_data.password_hash);
         
         if (password === "GOOGLE_AUTH_SERVICE") {
@@ -146,13 +161,14 @@ const login = async (req, res) => {
                 return res.status(401).json({ success: false, error: "טוקן גוגל פג תוקף או לא תקין" });
             }
         } else if (!is_match) {
-            return res.status(400).json({ 
+            return res.status(401).json({ 
                 success: false, 
                 error: "פרטי התחברות שגויים",
                 errors: { general: "המייל או הסיסמה אינם תואמים" }
             });
         }
 
+        // שליפת הפרופיל
         const { data: profile_data, error: profile_error } = await supabase
             .from('profiles')
             .select('id, first_name, last_name, avatar_url, user_alias')
@@ -173,13 +189,16 @@ const login = async (req, res) => {
             token
         });
     } catch (err) {
-        console.error("Login Error:", err.message);
+        console.error("[User Controller] Login Error:", err.message);
         res.status(500).json({ success: false, error: "שגיאה בתהליך ההתחברות" });
     }
 };
 
 const { get_active_session } = require('./postController');
 
+/**
+ * עדכון מיקום משתמש בזמן אמת ושמירה להיסטוריית סשן
+ */
 const update_location = async (req, res) => {
     const { latitude, longitude } = req.body;
     const user_id = req.user?.id; 
@@ -189,6 +208,7 @@ const update_location = async (req, res) => {
     }
 
     try {
+        // עדכון מיקום נוכחי בפרופיל
         await supabase
             .from('profiles')
             .update({ 
@@ -198,6 +218,7 @@ const update_location = async (req, res) => {
             })
             .eq('id', user_id);
 
+        // בדיקה אם יש סשן פעיל לתיעוד היסטוריה
         const active_session = await get_active_session(user_id);
         
         if (active_session) {
@@ -212,7 +233,7 @@ const update_location = async (req, res) => {
                 next_loc_number = maxData[0].location_number + 1;
             }
             
-            const { error: locError } = await supabase
+            await supabase
                 .from('locations')
                 .insert([{
                     user_id,
@@ -222,19 +243,18 @@ const update_location = async (req, res) => {
                     location_number: next_loc_number,
                     created_at: new Date().toISOString()
                 }]);
-                
-            if (locError) {
-                console.error("Location Tracking Insert Error:", locError.message);
-            }
         }
 
         res.json({ success: true });
     } catch (err) {
-        console.error("Update Location Error:", err.message);
+        console.error("[User Controller] Location Error:", err.message);
         res.status(500).json({ success: false, error: "עדכון המיקום נכשל" });
     }
 };
 
+/**
+ * שליפת נתוני פרופיל למשתמש המחובר
+ */
 const get_profile = async (req, res) => {
     try {
         const { data: user, error } = await supabase
@@ -246,9 +266,148 @@ const get_profile = async (req, res) => {
         if (error) throw error;
         res.json({ success: true, user });
     } catch (err) {
-        console.error("Get Profile Error:", err.message);
+        console.error("[User Controller] Get Profile Error:", err.message);
         res.status(500).json({ success: false, error: "שגיאה בשליפת נתוני פרופיל" });
     }
 };
 
-module.exports = { register, login, get_profile, update_location };
+/**
+ * בדיקה מהירה אם אימייל קיים במערכת (שלב 2 ברישום)
+ */
+const check_email = async (req, res) => {
+    const { email } = req.body;
+    try {
+        if (!email) {
+            return res.status(400).json({ success: false, error: "אימייל חובה לצורך בדיקה" });
+        }
+
+        const clean_email = email.trim().toLowerCase();
+        const { data: existing_user } = await supabase
+            .from('auth_manual')
+            .select('id')
+            .eq('email', clean_email)
+            .maybeSingle();
+
+        if (existing_user) {
+            return res.status(200).json({ success: false, exists: true, error: "האימייל כבר קיים במערכת" });
+        }
+
+        res.json({ success: true, exists: false });
+    } catch (err) {
+        console.error("[User Controller] Check Email Error:", err.message);
+        res.status(500).json({ success: false, error: "שגיאה בבדיקת אימייל" });
+    }
+};
+
+/**
+ * עדכון טוקן התראות (Push Token)
+ */
+const update_push_token = async (req, res) => {
+    const { token } = req.body;
+    const user_id = req.user?.id;
+
+    if (!user_id) return res.status(401).json({ success: false });
+
+    try {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ expo_push_token: token })
+            .eq('id', user_id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Update Push Token Error:", err.message);
+        res.status(500).json({ success: false, error: "שגיאה בעדכון טוקן התראות" });
+    }
+};
+
+/**
+ * עדכון פרטי פרופיל (שם וכינוי)
+ */
+const update_profile = async (req, res) => {
+    const { first_name, last_name, user_alias } = req.body;
+    const user_id = req.user?.id;
+
+    if (!user_id) return res.status(401).json({ success: false });
+
+    try {
+        const updateData = {};
+        if (first_name) updateData.first_name = first_name.trim();
+        if (last_name) updateData.last_name = last_name.trim();
+        if (user_alias) updateData.user_alias = user_alias.trim();
+        if (req.file) updateData.avatar_url = req.file.path; // הכתובת מקלאודינרי
+
+        const { data, error } = await supabase
+            .from('profiles')
+            .update(updateData)
+            .eq('id', user_id)
+            .select()
+            .single();
+
+        if (error) {
+            if (error.code === '23505') {
+                return res.status(400).json({ success: false, error: "הכינוי כבר תפוס" });
+            }
+            throw error;
+        }
+
+        res.json({ success: true, user: data });
+    } catch (err) {
+        console.error("Update Profile Error:", err.message);
+        res.status(500).json({ success: false, error: "עדכון הפרופיל נכשל" });
+    }
+};
+
+/**
+ * שליפת היסטוריית התראות למשתמש
+ */
+const get_notifications = async (req, res) => {
+    const user_id = req.user?.id;
+    try {
+        const { data, error } = await supabase
+            .from('notifications_history')
+            .select('*')
+            .eq('user_id', user_id)
+            .order('created_at', { ascending: false })
+            .limit(50);
+
+        if (error) throw error;
+        res.json({ success: true, notifications: data });
+    } catch (err) {
+        console.error("Get Notifications Error:", err.message);
+        res.status(500).json({ success: false });
+    }
+};
+
+/**
+ * סימון התראה כנקראה
+ */
+const mark_notification_read = async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.user?.id;
+    try {
+        const { error } = await supabase
+            .from('notifications_history')
+            .update({ is_read: true })
+            .eq('id', id)
+            .eq('user_id', user_id);
+
+        if (error) throw error;
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
+};
+
+module.exports = { 
+    register, 
+    login, 
+    get_profile, 
+    update_location, 
+    check_email, 
+    update_push_token,
+    update_profile,
+    get_notifications,
+    mark_notification_read
+};

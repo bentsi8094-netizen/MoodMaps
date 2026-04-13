@@ -3,6 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator,
 import GlassCard from "../components/GlassCard";
 import ErrorText from "../components/ErrorText";
 import { user_service } from "../services/userService";
+import { validate_email, validate_password } from "../utils/validationHelper";
 
 export default function SignInScreen({ on_login }) {
   const [is_loading, set_is_loading] = useState(false);
@@ -15,12 +16,11 @@ export default function SignInScreen({ on_login }) {
     const clean_email = form_data.email.trim().toLowerCase();
     const current_errors = {};
 
-    // ולידציית פורמט (Regex)
-    const email_regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!clean_email) current_errors.email = "נא להזין אימייל";
-    else if (!email_regex.test(clean_email)) current_errors.email = "פורמט אימייל לא תקין";
-    
-    if (!form_data.password) current_errors.password = "נא להזין סיסמה";
+    const email_error = validate_email(form_data.email);
+    const password_error = validate_password(form_data.password);
+
+    if (email_error) current_errors.email = email_error;
+    if (password_error) current_errors.password = password_error;
 
     if (Object.keys(current_errors).length > 0) {
       set_errors(current_errors);

@@ -80,13 +80,15 @@ export default function CommentsModal({ visible, on_close, session_id, post_alia
       <View style={[styles.comment_wrapper, is_me ? styles.my_comment_wrapper : styles.other_comment_wrapper]}>
         {!is_me && (
           <View style={styles.comment_avatar_container}>
-            {item.user_avatar_url ? (
-              <Image source={{ uri: item.user_avatar_url }} style={styles.comment_avatar} transition={200} />
-            ) : (
-              <View style={[styles.comment_avatar, styles.avatar_placeholder]}>
-                <Text style={styles.avatar_letter}>{item.user_alias?.[0]?.toUpperCase() || '?'}</Text>
-              </View>
-            )}
+            <TouchableOpacity onPress={() => item.user_avatar_url && useAppStore.getState().open_viewer(item.user_avatar_url)}>
+              {item.user_avatar_url ? (
+                <Image source={{ uri: item.user_avatar_url }} style={styles.comment_avatar} transition={200} />
+              ) : (
+                <View style={[styles.comment_avatar, styles.avatar_placeholder]}>
+                  <Text style={styles.avatar_letter}>{item.user_alias?.[0]?.toUpperCase() || '?'}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
           </View>
         )}
 
@@ -122,7 +124,10 @@ export default function CommentsModal({ visible, on_close, session_id, post_alia
 
             <View style={styles.header_info}>
               <Text style={styles.title} numberOfLines={1}>תגובות ל{post_alias}</Text>
-              <View style={styles.header_avatar_wrapper}>
+              <TouchableOpacity 
+                style={styles.header_avatar_wrapper} 
+                onPress={() => post_avatar && useAppStore.getState().open_viewer(post_avatar)}
+              >
                 {post_avatar ? (
                   <Image source={{ uri: post_avatar }} style={styles.header_avatar} />
                 ) : (
@@ -130,7 +135,7 @@ export default function CommentsModal({ visible, on_close, session_id, post_alia
                     <Text style={styles.avatar_letter}>{post_alias?.[0]?.toUpperCase() || '?'}</Text>
                   </View>
                 )}
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
           

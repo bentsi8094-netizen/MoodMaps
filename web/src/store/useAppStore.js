@@ -14,10 +14,10 @@ import { API_BASE_URL } from '../constants/Config';
 const normalize_user_data = (raw_data) => {
   if (!raw_data) return null;
   return {
-    id: raw_data._id || raw_data.id,
+    id: String(raw_data._id || raw_data.id || ""),
     first_name: raw_data.first_name || "משתמש",
-    user_alias: raw_data.user_alias || "אנונימי",
-    email: raw_data.email,
+    user_alias: raw_data.user_alias || raw_data.email?.split('@')[0] || "אנונימי",
+    email: raw_data.email || "",
     mood: raw_data.mood || raw_data.active_emoji || "😀",
     sticker_url: raw_data.sticker_url || null,
     avatar_url: raw_data.avatar_url || raw_data.profile_image || null
@@ -31,6 +31,10 @@ export const useAppStore = create(
     (set, get) => ({
       current_user: null,
       is_loading_user: true,
+      notifications: [],
+      is_loading_notifications: false,
+      target_session_id: null,
+      viewer_image_url: null,
 
       init_auth: async () => {
         set({ is_loading_user: true });
@@ -46,7 +50,8 @@ export const useAppStore = create(
                   await Promise.all([
                     get().fetch_posts(),
                     get().sync_active_session(),
-                    get().refresh_locations(true)
+                    get().refresh_locations(true),
+                    get().fetch_notifications()
                   ]);
                 }
               }
@@ -72,7 +77,8 @@ export const useAppStore = create(
           await Promise.all([
             get().fetch_posts(),
             get().sync_active_session(),
-            get().refresh_locations(true)
+            get().refresh_locations(true),
+            get().fetch_notifications()
           ]);
         } catch (e) {
           console.error("[Store] Login Error:", e.message);
@@ -90,7 +96,8 @@ export const useAppStore = create(
             current_user: null, 
             messages: [], 
             active_posts: [], 
-            comments: [] 
+            comments: [],
+            notifications: []
           });
           update_api_token(null);
           await AsyncStorage.multiRemove(['user_token']);
@@ -115,6 +122,57 @@ export const useAppStore = create(
           return { success: false, error: e.message };
         }
       },
+      update_profile: async (data) => {
+        try {
+          const res = await user_service.update_profile(data);
+          if (res?.success && res.user) {
+            set({ current_user: normalize_user_data(res.user) });
+            return { success: true };
+          }
+          return { success: false, error: res?.error || "עדכון הפרופיל נכשל" };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      },
+
+      fetch_notifications: async () => {
+        set({ is_loading_notifications: true });
+        try {
+          const res = await user_service.get_notifications();
+          if (res?.success) {
+            set({ notifications: res.notifications || [] });
+          }
+        } catch (e) {
+          console.error("[Store] Fetch Notifications Error:", e.message);
+        } finally {
+          set({ is_loading_notifications: false });
+        }
+      },
+
+      mark_notification_read: async (id) => {
+        try {
+          const res = await user_service.mark_notification_read(id);
+          if (res?.success) {
+            set(state => ({
+              notifications: state.notifications.map(n => n.id === id ? { ...n, is_read: true } : n)
+            }));
+          }
+        } catch (e) {
+          console.error("[Store] Mark Read Error:", e.message);
+        }
+      },
+
+      add_new_notification: (notification) => {
+        const { notifications } = get();
+        // מונעים כפילויות
+        if (notifications.some(n => n.id === notification.id)) return;
+        set({ notifications: [notification, ...notifications] });
+      },
+
+      set_target_session: (id) => set({ target_session_id: id }),
+
+      open_viewer: (url) => set({ viewer_image_url: url }),
+      close_viewer: () => set({ viewer_image_url: null }),
 
       active_posts: [],
       is_loading_feed: false,
@@ -126,7 +184,8 @@ export const useAppStore = create(
           if (result?.success) {
             const normalized = (result.posts || []).map(post => ({
               ...post,
-              id: (post._id || post.id)?.toString()
+              id: String(post._id || post.id || ""),
+              user_id: String(post.user_id || "")
             }));
             set({ active_posts: normalized });
           }
@@ -157,13 +216,13 @@ export const useAppStore = create(
             if (result.post) {
               const new_post = { 
                 ...result.post, 
-                id: (result.post._id || result.post.id)?.toString(),
-                user_id: result.post.user_id?.toString()
+                id: String(result.post._id || result.post.id || ""),
+                user_id: String(result.post.user_id || "")
               };
               set(state => ({
                 active_posts: [
                   new_post, 
-                  ...state.active_posts.filter(p => String(p.user_id).toLowerCase() !== String(current_user.id).toLowerCase())
+                  ...state.active_posts.filter(p => String(p.user_id) !== String(current_user.id))
                 ]
               }));
             } else {
@@ -189,14 +248,14 @@ export const useAppStore = create(
           if (response?.success && response.active) {
             const normalized_post = { 
               ...response.post, 
-              id: (response.post._id || response.post.id)?.toString(),
-              user_id: response.post.user_id?.toString()
+              id: String(response.post._id || response.post.id || ""),
+              user_id: String(response.post.user_id || "")
             };
             
             set(state => ({
               active_posts: [
                 normalized_post, 
-                ...state.active_posts.filter(p => String(p.user_id).toLowerCase() !== String(current_user.id).toLowerCase())
+                ...state.active_posts.filter(p => String(p.user_id) !== String(current_user.id))
               ],
               comments: response.comments || [],
               messages: (response.chat || []).map(m => ({
@@ -226,7 +285,7 @@ export const useAppStore = create(
           const result = await post_service.deactivate_status();
           if (result?.success) {
             set(state => ({ 
-              active_posts: state.active_posts.filter(p => String(p.user_id).toLowerCase() !== String(current_user.id).toLowerCase()),
+              active_posts: state.active_posts.filter(p => String(p.user_id) !== String(current_user.id)),
               messages: [],
               comments: []
             }));

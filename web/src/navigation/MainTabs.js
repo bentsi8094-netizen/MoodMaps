@@ -7,6 +7,7 @@ import FeedScreen from '../screens/FeedScreen';
 import MyPostsScreen from '../screens/MyPostsScreen';
 import MapScreen from '../screens/MapScreen';
 import NewPostScreen from '../screens/NewPostScreen';
+import { useAppStore } from '../store/useAppStore';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -59,6 +60,13 @@ function CustomTabBar({ state, navigation }) {
 
 export default function MainTabs() {
   const [activeTab, setActiveTab] = React.useState('Feed');
+  const target_id = useAppStore(state => state.target_session_id);
+
+  React.useEffect(() => {
+    if (target_id) {
+      setActiveTab('Feed');
+    }
+  }, [target_id]);
 
   if (Platform.OS === 'web') {
     const renderScreen = () => {

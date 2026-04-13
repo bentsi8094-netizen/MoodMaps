@@ -1,5 +1,6 @@
 const supabase = require('../config/supabaseClient');
 const crypto = require('crypto');
+const notification_service = require('../services/notificationService');
 
 const get_active_session = async (user_id) => {
     const { data: latestPosts, error: postErr } = await supabase
@@ -143,6 +144,9 @@ const create_post = async (req, res) => {
             .single();
 
         if (insert_error) throw insert_error;
+
+        // רישום בעל הפוסט לקבלת התראות על הפוסט של עצמו
+        await notification_service.subscribe_to_post(target_session_id, user_id);
 
         if (messages && Array.isArray(messages) && messages.length > 0) {
             try {

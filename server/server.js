@@ -6,12 +6,46 @@ const post_routes = require('./routes/postRoutes');
 const comment_routes = require('./routes/commentRoutes');
 const ai_routes = require('./routes/aiRoutes');
 
+const rateLimit = require('express-rate-limit');
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(express.json({ limit: '20mb' }));
-app.use(express.urlencoded({ extended: true, limit: '20mb' }));
+// הגבלת CORS לדומיינים ספציפיים
+const whitelist = [
+    'http://localhost:19006', 
+    'http://localhost:8081',
+    'http://localhost:3000',
+    'https://moodmaps.vercel.app', // דוגמה לדומיין Web
+    /\.expo\.dev$/ // מאפשר גישה מ-Expo Go
+];
+
+const corsOptions = {
+    origin: function (origin, callback) {
+        if (!origin || whitelist.some(domain => 
+            typeof domain === 'string' ? domain === origin : domain.test(origin)
+        )) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    credentials: true
+};
+
+app.use(cors(corsOptions));
+
+// הגבלת נפח בקשות למניעת התקפות DOS (שינוי מ-20mb ל-2mb)
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+// הגבלת קצב כללית (Global Rate Limiting) לכל ה-API
+const globalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 דקות
+    max: 100, // מקסימום 100 בקשות מ-IP אחד
+    message: { success: false, error: "יותר מדי בקשות, אנא נסה שוב מאוחר יותר" }
+});
+app.use('/api/', globalLimiter);
 
 app.get('/ping', (req, res) => {
     res.status(200).send('pong');

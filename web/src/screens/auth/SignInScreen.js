@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Image, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useGoogleLogin } from '@react-oauth/google';
 import GlassCard from '../../components/GlassCard';
 import ErrorText from '../../components/ErrorText';
 import { user_service } from '../../services/userService';
 import { update_api_token } from '../../services/apiClient';
+import { validate_email, validate_password } from '../../utils/validationHelper';
 
 const GOOGLE_G_LOGO = "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA0OCA0OCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij48cGF0aCBmaWxsPSIjRUE0MzM1IiBkPSJNMjQgOS41YzMuNTQgMCA2LjcyIDEuMjMgOS4yMSAzLjI1bDYuODItNi44MkMzNS44NCAzLjM0IDMwLjU1IDIgMjQgMiA4LjA4IDIgNC43NyAxMi4xNSAzIDIzLjU2bDEwuMjIgNy45MkMxNC41OSAxMy42NiAxOC44NiA5LjUgMjQgOS41eiIvPjxwYXRoIGZpbGw9IiM0Mjg1RjQiIGQ9Ik00Ni41IDI0YzAtMS41OC0uMTQtMy4xMS0uNDEtNC41SDI0djloMTIuN2MtLjYgMy4xOS0yLjQyIDUuODUtNC45OCA3LjU4bDUuOTggNy45MkM0Mi41NiA0MCA0Ni41IDMzLjIyIDQ2LjUgMjR6Ii8+PHBhdGggZmlsbD0iI0ZCQkMwNSIgZD0iTTEwLjQ3IDMxLjgxQTE1LjkzIDE1LjkzIDAgMCAxIDkgMjRjMC0yLjY3LjQ1LTUuMjYgMS4yNy03LjY5TDEwLjIzIDguMzlDNi4zNiAxNS44MiA0IDI0IDQgMjRzMi4zNiA4LjE4IDYuMjMgMTUuNjFsNC4yNC0zLjh6Ii8+PHBhdGggZmlsbD0iIzM0QTg1MyIgZD0iTTI0IDQ0YzUuNDQgMCA5Ljg4LTEuNzggMTMuMjItNC44M2wtNS45OC03LjkyYy0xLjg0IDEuMjUtNC4yMiAyLjA1LTcuMjQgMi4wNS01LjE0IDAtOS40MS0zLjQ5LTEwLjk3LTguMTlsLTEwLjIxIDcuOTJDMTAuODQgNDAgMTUuMjggNDQgMjQgNDR6Ii8+PHBhdGggZmlsbD0ibm9uZSIgZD0iTTAgMGg0OHY0OEgwVnoiLz48L3N2Zz4=";
 
@@ -30,12 +31,11 @@ export default function SignInScreen({ on_login }) {
     const { email, password } = form_data;
     const current_errors = {};
 
-    // ולידציית פורמט (Regex)
-    const email_regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) current_errors.email = "אימייל חסר";
-    else if (!email_regex.test(email.trim())) current_errors.email = "פורמט אימייל לא תקין";
-    
-    if (!password) current_errors.password = "סיסמה חסרה";
+    const email_error = validate_email(email);
+    const password_error = validate_password(password);
+
+    if (email_error) current_errors.email = email_error;
+    if (password_error) current_errors.password = password_error;
 
     if (Object.keys(current_errors).length > 0) {
       set_errors(current_errors);

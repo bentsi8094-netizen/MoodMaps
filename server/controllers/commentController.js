@@ -1,4 +1,5 @@
 const supabase = require('../config/supabaseClient');
+const notification_service = require('../services/notificationService');
 
 const get_comments = async (req, res) => {
     const { session_id } = req.params;
@@ -88,6 +89,35 @@ const add_comment = async (req, res) => {
             user_alias: newComment.user_alias, 
             user_avatar_url: profile?.avatar_url || null
         };
+
+        // --- לוגיקת התראות (שכבה נפרדת) ---
+        try {
+            // 1. רישום המגיב לקבלת התראות עתידיות על הפוסט הזה
+            await notification_service.subscribe_to_post(session_id, user_id);
+
+            // 2. שליפת ה-Alias של בעל הפוסט עבור ההתראה
+            const { data: postData } = await supabase
+                .from('posts')
+                .select('user_id, profiles:user_id(user_alias)')
+                .eq('session_id', session_id)
+                .order('created_at', { ascending: true })
+                .limit(1)
+                .single();
+
+            const post_owner_alias = postData?.profiles?.user_alias || "חבר";
+
+            // 3. הפצת ההתראה לכל המנויים
+            await notification_service.notify_subscribers({
+                session_id,
+                sender_id: user_id,
+                sender_alias: user_alias || "משתמש",
+                post_owner_alias,
+                comment_text: content.trim()
+            });
+        } catch (noteErr) {
+            console.error("[Comment Controller] Notification Dispatch Error:", noteErr.message);
+        }
+        // ---------------------------------
 
         res.json({ success: true, comment: fullComment });
     } catch (err) {

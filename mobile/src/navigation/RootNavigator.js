@@ -4,14 +4,19 @@ import { Image } from 'expo-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createStackNavigator, TransitionPresets, CardStyleInterpolators } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppStore } from '../store/useAppStore';
+import { syncPushTokenWithServer, setupNotificationListeners } from '../utils/notificationHelper';
+import Sidebar from '../components/Sidebar';
+import FullImageModal from '../components/FullImageModal';
 
 import UserMainScreen from '../auth/UserMainScreen';
 import MainTabs from './MainTabs';
 
 const Stack = createStackNavigator();
+const SidebarContext = React.createContext();
 
 const TransparentTheme = {
   ...DefaultTheme,
@@ -27,10 +32,12 @@ const TransparentTheme = {
 function AppHeader() {
   const current_user = useAppStore(state => state.current_user);
   const logout_user = useAppStore(state => state.logout_user);
+  const { setIsSidebarOpen } = React.useContext(SidebarContext);
   const is_logging_out = useRef(false);
 
   const handle_logout = useCallback(async () => {
     if (is_logging_out.current) return;
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     is_logging_out.current = true;
     try {
       await logout_user();
@@ -45,13 +52,30 @@ function AppHeader() {
 
   return (
     <View style={styles.top_header}>
-      <TouchableOpacity onPress={handle_logout} style={styles.logout_btn}>
-        <Text style={styles.logout_text}>התנתק</Text>
-      </TouchableOpacity>
+      <View style={styles.header_left}>
+        <TouchableOpacity 
+          onPress={() => {
+            Haptics.selectionAsync();
+            setIsSidebarOpen(true);
+          }} 
+          style={styles.hamburger_btn}
+        >
+          <View style={styles.hamburger_line} />
+          <View style={[styles.hamburger_line, { width: 15, marginTop: 4 }]} />
+          <View style={[styles.hamburger_line, { marginTop: 4 }]} />
+        </TouchableOpacity>
+        
+        <TouchableOpacity onPress={handle_logout} style={styles.logout_btn}>
+          <Text style={styles.logout_text}>התנתק</Text>
+        </TouchableOpacity>
+      </View>
       
       <View style={styles.user_section}>
         <Text style={styles.user_name}>היי, {display_name} 👋</Text>
-        <View style={styles.avatar_container}>
+        <TouchableOpacity 
+          style={styles.avatar_container} 
+          onPress={() => current_user?.avatar_url && useAppStore.getState().open_viewer(current_user.avatar_url)}
+        >
           {current_user?.avatar_url ? (
             <Image 
               source={{ uri: current_user.avatar_url }} 
@@ -64,28 +88,43 @@ function AppHeader() {
               <Text style={styles.avatar_initial}>{display_name[0]}</Text>
             </View>
           )}
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
 function AppWithHeader() {
+  const { isSidebarOpen, setIsSidebarOpen } = React.useContext(SidebarContext);
+
   return (
     <View style={styles.full_screen}>
       <AppHeader />
       <MainTabs />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </View>
   );
 }
 
 export default function RootNavigator() {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const current_user = useAppStore(state => state.current_user);
   const is_loading = useAppStore(state => state.is_loading_user);
   const init_auth = useAppStore(state => state.init_auth);
 
   useEffect(() => {
-    init_auth();
+    init_auth().then(() => {
+      // סינכרון טוקן התראות לאחר התחברות
+      syncPushTokenWithServer();
+    });
+
+    // הקמת מאזינים להתראות (לחיצה על התראה וכו')
+    const cleanup = setupNotificationListeners((data) => {
+      console.log("[Notifications] User tapped notification:", data);
+      // כאן ניתן להוסיף לוגיקה לניווט אוטומטי לסשן הרלוונטי
+    });
+
+    return cleanup;
   }, [init_auth]);
 
   if (is_loading) {
@@ -106,29 +145,32 @@ export default function RootNavigator() {
       />
       <SafeAreaView style={[styles.safe_area, { backgroundColor: 'transparent' }]}>
         <NavigationContainer theme={TransparentTheme}>
-          <Stack.Navigator 
-            screenOptions={{ 
-              headerShown: false, 
-              animationEnabled: false, 
-              detachPreviousScreen: false,
-              gestureEnabled: false, 
-              cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
-              cardStyle: { 
-                backgroundColor: 'transparent',
-                elevation: 0,
-                shadowOpacity: 0,
-                shadowColor: 'transparent',
-              } 
-            }}
-          >
-            {!current_user ? (
-              <Stack.Screen name="Auth" component={UserMainScreen}/>
-            ) : (
-            <Stack.Group>
-                <Stack.Screen name="AppRoot" component={AppWithHeader} />
-              </Stack.Group>
-            )}
-          </Stack.Navigator>
+          <SidebarContext.Provider value={{ isSidebarOpen, setIsSidebarOpen }}>
+            <Stack.Navigator 
+              screenOptions={{ 
+                headerShown: false, 
+                animationEnabled: false, 
+                detachPreviousScreen: false,
+                gestureEnabled: false, 
+                cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
+                cardStyle: { 
+                  backgroundColor: 'transparent',
+                  elevation: 0,
+                  shadowOpacity: 0,
+                  shadowColor: 'transparent',
+                } 
+              }}
+            >
+              {!current_user ? (
+                <Stack.Screen name="Auth" component={UserMainScreen}/>
+              ) : (
+              <Stack.Group>
+                  <Stack.Screen name="AppRoot" component={AppWithHeader} />
+                </Stack.Group>
+              )}
+            </Stack.Navigator>
+            <FullImageModal />
+          </SidebarContext.Provider>
         </NavigationContainer>
       </SafeAreaView>
     </View>
@@ -155,4 +197,7 @@ const styles = StyleSheet.create({
   avatar_initial: { color: 'white', fontWeight: 'bold' },
   logout_text: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   logout_btn: { backgroundColor: 'rgba(255, 255, 255, 0.2)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15 },
+  header_left: { flexDirection: 'row', alignItems: 'center' },
+  hamburger_btn: { padding: 10, marginRight: 5 },
+  hamburger_line: { height: 2, width: 22, backgroundColor: 'white', borderRadius: 1 },
 });

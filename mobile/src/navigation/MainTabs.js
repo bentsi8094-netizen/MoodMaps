@@ -2,6 +2,8 @@ import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { createMaterialTopTabNavigator } from '@react-navigation/material-top-tabs';
 import { useNavigation } from '@react-navigation/native';
+import { useEffect } from 'react';
+import { useAppStore } from '../store/useAppStore';
 
 import FeedScreen from '../screens/FeedScreen';
 import MyPostsScreen from '../screens/MyPostsScreen';
@@ -54,6 +56,15 @@ function CustomTabBar({ state, navigation }) {
 }
 
 export default function MainTabs() {
+  const navigation = useNavigation();
+  const target_id = useAppStore(state => state.target_session_id);
+
+  useEffect(() => {
+    if (target_id) {
+      navigation.navigate('Feed', { target_post_id: target_id });
+    }
+  }, [target_id, navigation]);
+
   return (
     <Tab.Navigator
       initialRouteName="Feed"

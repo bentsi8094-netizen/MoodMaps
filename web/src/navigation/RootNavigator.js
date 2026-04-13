@@ -7,11 +7,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppStore } from '../store/useAppStore';
+import { setupWebNotificationListener, setupHistoryListener } from '../utils/notificationHelper';
+import Sidebar from '../components/Sidebar';
+import FullImageModal from '../components/FullImageModal';
 
 import UserMainScreen from '../screens/auth/UserMainScreen';
 import MainTabs from './MainTabs';
 
 const Stack = createStackNavigator();
+const SidebarContext = React.createContext();
 
 const TransparentTheme = {
   ...DefaultTheme,
@@ -27,25 +31,9 @@ const TransparentTheme = {
 function AppHeader() {
   const current_user = useAppStore(state => state.current_user);
   const logout_user = useAppStore(state => state.logout_user);
+  const { setIsSidebarOpen } = React.useContext(SidebarContext);
   const is_logging_out = useRef(false);
 
-  const normalize_user_data = (raw_data) => {
-    if (!raw_data) return null;
-    try {
-      return {
-        id: String(raw_data._id || raw_data.id || "unknown"),
-        first_name: raw_data.first_name || "משתמש",
-        user_alias: raw_data.user_alias || raw_data.email?.split('@')[0] || "אנונימי",
-        email: raw_data.email || "",
-        mood: raw_data.mood || raw_data.active_emoji || "😀",
-        sticker_url: raw_data.sticker_url || null,
-        avatar_url: raw_data.avatar_url || raw_data.profile_image || null
-      };
-    } catch (e) {
-      console.error("[Store] Normalization failed:", e);
-      return null;
-    }
-  };
 
   const handle_logout = useCallback(async () => {
     if (is_logging_out.current) return;
@@ -57,20 +45,30 @@ function AppHeader() {
     }
   }, [logout_user]);
 
-  const user = normalize_user_data(current_user);
-  const display_name = (user?.first_name && user.first_name !== "משתמש") 
-                        ? user.first_name 
-                        : (user?.user_alias || "חבר");
+  const display_name = (current_user?.first_name && current_user.first_name !== "משתמש") 
+                        ? current_user.first_name 
+                        : (current_user?.user_alias || "חבר");
 
   return (
     <View style={styles.top_header}>
-      <TouchableOpacity onPress={handle_logout} style={styles.logout_btn}>
-        <Text style={styles.logout_text}>התנתק</Text>
-      </TouchableOpacity>
+      <View style={styles.header_left}>
+        <TouchableOpacity onPress={() => setIsSidebarOpen(true)} style={styles.hamburger_btn}>
+          <View style={styles.hamburger_line} />
+          <View style={[styles.hamburger_line, { width: 14, marginTop: 4 }]} />
+          <View style={[styles.hamburger_line, { marginTop: 4 }]} />
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={handle_logout} style={styles.logout_btn}>
+          <Text style={styles.logout_text}>התנתק</Text>
+        </TouchableOpacity>
+      </View>
       
       <View style={styles.user_section}>
         <Text style={styles.user_name}>היי, {display_name} 👋</Text>
-        <View style={styles.avatar_container}>
+        <TouchableOpacity 
+          style={styles.avatar_container} 
+          onPress={() => current_user?.avatar_url && useAppStore.getState().open_viewer(current_user.avatar_url)}
+        >
           {current_user?.avatar_url ? (
             <Image 
               source={{ uri: current_user.avatar_url }} 
@@ -83,17 +81,20 @@ function AppHeader() {
               <Text style={styles.avatar_initial}>{display_name[0]}</Text>
             </View>
           )}
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
 }
 
 function AppWithHeader() {
+  const { isSidebarOpen, setIsSidebarOpen } = React.useContext(SidebarContext);
+
   return (
     <View style={styles.full_screen}>
       <AppHeader />
       <MainTabs />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </View>
   );
 }
@@ -105,7 +106,27 @@ export default function RootNavigator() {
 
   useEffect(() => {
     init_auth();
-  }, [init_auth]);
+
+    const subs = [];
+
+    // מאזין להתראות זמן אמת (ווב)
+    const cleanupNotifications = setupWebNotificationListener((newComment) => {
+      if (current_user && newComment.user_id !== current_user.id) {
+        console.log(`[Notification] New comment from ${newComment.user_alias}`);
+      }
+    });
+    subs.push(cleanupNotifications);
+
+    // מאזין להיסטוריית התראות (בווב) כדי לעדכן את ה-Sidebar בחי
+    if (current_user?.id) {
+      const cleanupHistory = setupHistoryListener(current_user.id, (note) => {
+        useAppStore.getState().add_new_notification(note);
+      });
+      subs.push(cleanupHistory);
+    }
+
+    return () => subs.forEach(cleanup => cleanup && cleanup());
+  }, [init_auth, current_user?.id]);
 
   if (is_loading) {
     return (
@@ -121,7 +142,8 @@ export default function RootNavigator() {
     return (
       <View style={{ flex: 1, backgroundColor: '#192f6a', width: '100%', height: '100vh' }}>
         <NavigationContainer theme={TransparentTheme}>
-          <Stack.Navigator 
+          <SidebarContext.Provider value={{ isSidebarOpen, setIsSidebarOpen }}>
+            <Stack.Navigator 
             screenOptions={{ 
               headerShown: false, 
               animationEnabled: false, 
@@ -132,8 +154,10 @@ export default function RootNavigator() {
               <Stack.Screen name="Auth" component={UserMainScreen}/>
             ) : (
               <Stack.Screen name="AppRoot" component={AppWithHeader} />
-            )}
-          </Stack.Navigator>
+              )}
+            </Stack.Navigator>
+            <FullImageModal />
+          </SidebarContext.Provider>
         </NavigationContainer>
       </View>
     );
@@ -197,4 +221,7 @@ const styles = StyleSheet.create({
   avatar_initial: { color: 'white', fontWeight: 'bold' },
   logout_text: { color: 'white', fontSize: 12, fontWeight: 'bold' },
   logout_btn: { backgroundColor: 'rgba(255, 255, 255, 0.2)', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15 },
+  header_left: { flexDirection: 'row', alignItems: 'center' },
+  hamburger_btn: { padding: 10, marginRight: 5, cursor: 'pointer' },
+  hamburger_line: { height: 2, width: 20, backgroundColor: 'white', borderRadius: 1 },
 });
