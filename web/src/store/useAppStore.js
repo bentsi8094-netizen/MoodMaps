@@ -47,26 +47,27 @@ export const useAppStore = create(
           if (token) {
             update_api_token(token);
             const response = await user_service.get_profile();
-              if (response?.success && response.user) {
-                const normalizedUser = normalize_user_data(response.user);
-                if (normalizedUser) {
-                  set({ current_user: normalizedUser });
-                  
-                  // אתחול סוקט
-                  const socket = initSocket(token);
-                  socket.off("new_notification"); // מניעת כפילויות
-                  socket.on("new_notification", (note) => {
-                    get().add_new_notification(note);
-                  });
+            if (response?.success && response.user) {
+              const normalizedUser = normalize_user_data(response.user);
+              if (normalizedUser) {
+                set({ current_user: normalizedUser });
+                
+                // אתחול סוקט
+                const socket = initSocket(token);
+                socket.off("new_notification");
+                socket.on("new_notification", (note) => {
+                  get().add_new_notification(note);
+                });
 
-                  await Promise.all([
-                    get().fetch_posts(),
-                    get().sync_active_session(),
-                    get().refresh_locations(true),
-                    get().fetch_notifications()
-                  ]);
-                }
+                // NON-BLOCKING: Background data fetch
+                Promise.all([
+                  get().fetch_posts(),
+                  get().sync_active_session(),
+                  get().refresh_locations(true),
+                  get().fetch_notifications()
+                ]).catch(err => console.error("[Store] Background fetch error:", err));
               }
+            }
           }
         } catch (e) {
           console.error("[Store] Init Auth Error:", e.message);
@@ -84,26 +85,23 @@ export const useAppStore = create(
             update_api_token(token);
             await AsyncStorage.setItem('user_token', token);
             
-            // אתחול סוקט
             const socket = initSocket(token);
-            // Cleanup old listeners to prevent duplication
             socket.off("new_notification");
-            
             socket.on("new_notification", (notification) => {
-              console.log("[Socket] Received notification:", notification);
               set(state => ({ 
                 notifications: [notification, ...state.notifications]
               }));
             });
           }
           
-          // Execute data fetching after token is guaranteed to be set
-          await Promise.all([
+          // NON-BLOCKING: Background data fetch
+          Promise.all([
             get().fetch_posts(),
             get().sync_active_session(),
             get().refresh_locations(true),
             get().fetch_notifications()
-          ]);
+          ]).catch(err => console.error("[Store] Login background fetch error:", err));
+          
         } catch (e) {
           console.error("[Store] Login Error:", e.message);
         } finally {
@@ -340,15 +338,34 @@ export const useAppStore = create(
         if (force) set({ is_loading_map: true });
         try {
           console.log("[Store] Refreshing locations... force:", force);
-          const { status } = await Location.requestForegroundPermissionsAsync();
+          
+          let status = 'denied';
+          // Web specific permission handling to prevent hanging
+          if (Platform.OS === 'web') {
+            try {
+              const res = await Location.requestForegroundPermissionsAsync();
+              status = res.status;
+            } catch (err) {
+              console.warn("[Store] Web Location Permission error:", err.message);
+              status = 'denied';
+            }
+          } else {
+            const res = await Location.requestForegroundPermissionsAsync();
+            status = res.status;
+          }
+
           console.log("[Store] Location Permission Status:", status);
           let coords = null;
 
           if (status === 'granted') {
-            const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch((e) => {
+            const loc = await Location.getCurrentPositionAsync({ 
+              accuracy: Location.Accuracy.Balanced,
+              timeout: 5000 // Added timeout to prevent infinite web hang
+            }).catch((e) => {
               console.warn("[Store] GetPosition Error:", e.message);
               return null;
             });
+            
             if (loc) {
               coords = { latitude: loc.coords.latitude, longitude: loc.coords.longitude };
               console.log("[Store] Got Coords:", coords);
@@ -358,18 +375,15 @@ export const useAppStore = create(
                 console.log("[Store] Updating location in backend...");
                 await map_service.update_location(coords);
               }
-            } else {
-              console.warn("[Store] Location found was null");
             }
           }
 
+          // Always try to fetch map users even if location is denied
           console.log("[Store] Fetching map users...");
           const mapRes = await map_service.get_map_users();
           if (mapRes?.success) {
             console.log("[Store] Map Users Count:", mapRes.users?.length || 0);
             set({ nearby_users: mapRes.users || [], last_map_update: now });
-          } else {
-            console.error("[Store] Map Fetch Failed:", mapRes?.error);
           }
         } catch (error) {
           console.error("[Store] Map Refresh Error:", error.message);
