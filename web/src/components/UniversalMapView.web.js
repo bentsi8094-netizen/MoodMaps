@@ -84,9 +84,19 @@ const UniversalMapView = forwardRef(({
 
   return (
     <View style={[styles.container, style]}>
-      <div ref={mapDivRef} style={{ width: '100%', height: '100%' }} />
-      {/* Passing the map instance to children (Markers) via context or cloneElement could be complex, 
-          so we'll handle Markers inside the Map component or via a simple global/ref approach. */}
+      <div 
+        ref={mapDivRef} 
+        style={{ 
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100%', 
+          height: '100%',
+          backgroundColor: '#e5e3df' // Loading color
+        }} 
+      />
       {React.Children.map(children, child => {
         if (React.isValidElement(child)) {
           return React.cloneElement(child, { map: mapInstance });
@@ -100,6 +110,8 @@ const UniversalMapView = forwardRef(({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    minHeight: 300, // Ensure it has a base height
+    overflow: 'hidden',
   }
 });
 
