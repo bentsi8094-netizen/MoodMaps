@@ -26,15 +26,7 @@ const whitelist = [
 ];
 
 const corsOptions = {
-    origin: function (origin, callback) {
-        if (!origin || whitelist.some(domain => 
-            typeof domain === 'string' ? domain === origin : domain.test(origin)
-        )) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // מאפשר לכל מקור להתחבר לצורך בדיקה (יש להחזיר ל-Whitelist בייצור)
     credentials: true
 };
 
