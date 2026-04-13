@@ -1,8 +1,8 @@
-import React, { useContext, useCallback, useRef, useEffect, useState } from 'react';
+import React, { useCallback, useRef, useEffect } from 'react';
 import { View, StyleSheet, ActivityIndicator, StatusBar, TouchableOpacity, Text, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
-import { createStackNavigator, TransitionPresets, CardStyleInterpolators } from '@react-navigation/stack';
+import { createStackNavigator, CardStyleInterpolators } from '@react-navigation/stack';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -31,7 +31,6 @@ function AppHeader() {
   const logout_user = useAppStore(state => state.logout_user);
   const setSidebarOpen = useAppStore(state => state.setSidebarOpen);
   const is_logging_out = useRef(false);
-
 
   const handle_logout = useCallback(async () => {
     if (is_logging_out.current) return;
@@ -89,21 +88,15 @@ function AppWithHeader() {
   const isSidebarOpen = useAppStore(state => state.isSidebarOpen);
   const setSidebarOpen = useAppStore(state => state.setSidebarOpen);
 
-  try {
-    console.log("[Navigator] User authenticated. Mounting AppRoot/AppWithHeader.");
-    return (
-      <View style={styles.full_screen}>
-        <AppHeader />
-        <MainTabs />
-        {typeof isSidebarOpen !== 'undefined' ? (
-          <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
-        ) : null}
-      </View>
-    );
-  } catch (err) {
-    console.error("[Navigator Crash] Error in AppWithHeader:", err);
-    return <View style={{flex:1, backgroundColor:'red'}}><Text>Navigation Error: {err.message}</Text></View>;
-  }
+  return (
+    <View style={styles.full_screen}>
+      <AppHeader />
+      <MainTabs />
+      {typeof isSidebarOpen !== 'undefined' && (
+        <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
+      )}
+    </View>
+  );
 }
 
 export default function RootNavigator() {
@@ -118,32 +111,41 @@ export default function RootNavigator() {
   if (is_loading) {
     return (
       <View style={[styles.center_container, { backgroundColor: '#192f6a' }]}>
-        {Platform.OS !== 'web' && <LinearGradient colors={['#4c669f', '#3b5998', '#192f6a']} style={StyleSheet.absoluteFill} />}
+        <LinearGradient colors={['#4c669f', '#3b5998', '#192f6a']} style={StyleSheet.absoluteFill} />
         <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
   }
 
+  const backgroundColors = current_user 
+    ? ['#00b4d8', '#9d4edd', '#f72585'] 
+    : ['#4c669f', '#3b5998', '#192f6a'];
+
+  const content = (
+    <NavigationContainer theme={TransparentTheme}>
+      <Stack.Navigator 
+        screenOptions={{ 
+          headerShown: false, 
+          animationEnabled: false, 
+          cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
+          cardStyle: { backgroundColor: 'transparent', flex: 1 } 
+        }}
+      >
+        {!current_user ? (
+          <Stack.Screen name="Auth" component={UserMainScreen}/>
+        ) : (
+          <Stack.Screen name="AppRoot" component={AppWithHeader} />
+        )}
+      </Stack.Navigator>
+      <FullImageModal />
+    </NavigationContainer>
+  );
+
   if (Platform.OS === 'web') {
-    console.log("[Navigator] Mounting Web. User:", current_user ? "Logged In" : "Guest");
     return (
-      <View style={{ flex: 1, backgroundColor: '#192f6a', width: '100%', height: '100vh' }}>
-        <NavigationContainer theme={TransparentTheme}>
-            <Stack.Navigator 
-            screenOptions={{ 
-              headerShown: false, 
-              animationEnabled: false, 
-              cardStyle: { backgroundColor: 'transparent', flex: 1 } 
-            }}
-          >
-            {!current_user ? (
-              <Stack.Screen name="Auth" component={UserMainScreen}/>
-            ) : (
-              <Stack.Screen name="AppRoot" component={AppWithHeader} />
-              )}
-            </Stack.Navigator>
-            <FullImageModal />
-        </NavigationContainer>
+      <View style={{ flex: 1, backgroundColor: 'transparent', width: '100%', height: '100vh' }}>
+        <LinearGradient colors={backgroundColors} style={StyleSheet.absoluteFill} />
+        {content}
       </View>
     );
   }
@@ -151,36 +153,9 @@ export default function RootNavigator() {
   return (
     <View style={[styles.full_screen, { backgroundColor: 'transparent' }]}>
       <StatusBar barStyle="light-content" />
-      <LinearGradient 
-        colors={current_user ? ['#00b4d8', '#9d4edd', '#f72585'] : ['#4c669f', '#3b5998', '#192f6a']} 
-        style={StyleSheet.absoluteFill} 
-      />
+      <LinearGradient colors={backgroundColors} style={StyleSheet.absoluteFill} />
       <SafeAreaView style={[styles.safe_area, { backgroundColor: 'transparent' }]}>
-        <NavigationContainer theme={TransparentTheme}>
-          <Stack.Navigator 
-            screenOptions={{ 
-              headerShown: false, 
-              animationEnabled: false, 
-              detachPreviousScreen: false,
-              gestureEnabled: false, 
-              cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
-              cardStyle: { 
-                backgroundColor: 'transparent',
-                elevation: 0,
-                shadowOpacity: 0,
-                shadowColor: 'transparent',
-              } 
-            }}
-          >
-            {!current_user ? (
-              <Stack.Screen name="Auth" component={UserMainScreen}/>
-            ) : (
-            <Stack.Group>
-                <Stack.Screen name="AppRoot" component={AppWithHeader} />
-              </Stack.Group>
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
+        {content}
       </SafeAreaView>
     </View>
   );
@@ -188,7 +163,7 @@ export default function RootNavigator() {
 
 const styles = StyleSheet.create({
   full_screen: { flex: 1 },
-  center_container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#3b5998' },
+  center_container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   safe_area: { flex: 1, paddingBottom: 0 },
   top_header: { 
     flexDirection: 'row', 
@@ -210,5 +185,3 @@ const styles = StyleSheet.create({
   hamburger_btn: { padding: 10, marginRight: 5, cursor: 'pointer' },
   hamburger_line: { height: 2, width: 20, backgroundColor: 'white', borderRadius: 1 },
 });
-/ /   F o r c e d   r e f r e s h   C o m m i t  
- 
