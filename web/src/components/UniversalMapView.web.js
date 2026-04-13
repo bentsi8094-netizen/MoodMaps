@@ -27,29 +27,44 @@ const UniversalMapView = forwardRef(({
     
     // Define Global Callback for Google Maps
     window.initMoodMap = () => {
+      // 1. Safety check for DOM reference
       if (!mapDivRef.current) return;
       
-      const map = new window.google.maps.Map(mapDivRef.current, {
-        center: { 
-          lat: initialRegion?.latitude || 31.7683, 
-          lng: initialRegion?.longitude || 35.2137 
-        },
-        zoom: 13,
-        disableDefaultUI: true,
-        clickableIcons: false,
-        gestureHandling: 'greedy',
-        styles: [
-          {
-            featureType: 'poi',
-            elementType: 'labels',
-            stylers: [{ visibility: 'off' }]
-          }
-        ]
-      });
+      // 2. SAFETY CHECK: Ensure the Map constructor is actually available.
+      // Even if Google calls this callback, some internal hydration might still be happening.
+      if (!window.google || !window.google.maps || !window.google.maps.Map) {
+        console.warn("[UniversalMapView] Google Maps context missing in callback, retrying...");
+        setTimeout(() => {
+          if (window.initMoodMap) window.initMoodMap();
+        }, 100);
+        return;
+      }
+      
+      try {
+        const map = new window.google.maps.Map(mapDivRef.current, {
+          center: { 
+            lat: initialRegion?.latitude || 31.7683, 
+            lng: initialRegion?.longitude || 35.2137 
+          },
+          zoom: 13,
+          disableDefaultUI: true,
+          clickableIcons: false,
+          gestureHandling: 'greedy',
+          styles: [
+            {
+              featureType: 'poi',
+              elementType: 'labels',
+              stylers: [{ visibility: 'off' }]
+            }
+          ]
+        });
 
-      googleMapRef.current = map;
-      setMapInstance(map);
-      if (onMapReady) onMapReady();
+        googleMapRef.current = map;
+        setMapInstance(map);
+        if (onMapReady) onMapReady();
+      } catch (err) {
+        console.error("[UniversalMapView] Error creating map instance:", err);
+      }
     };
 
     if (!window.google) {
@@ -66,12 +81,17 @@ const UniversalMapView = forwardRef(({
         document.head.appendChild(script);
       }
     } else {
-      window.initMoodMap();
+      // If script is already there, manually trigger the initialization
+      // We wrap it in a small timeout to ensure it happens AFTER the div is rendered in the current mount cycle
+      setTimeout(() => {
+        if (window.initMoodMap) window.initMoodMap();
+      }, 0);
     }
 
     return () => {
-      // Cleanup global callback if needed
-      delete window.initMoodMap;
+      // ROOT CAUSE FIX: DO NOT delete window.initMoodMap here.
+      // Deleting it while the script might still be loading or hydrating causes the 'undefined' crash.
+      // Keeping it defined is safe as it will just exit if mapDivRef.current is null.
     };
   }, []);
 
