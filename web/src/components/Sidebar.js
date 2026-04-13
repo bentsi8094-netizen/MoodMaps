@@ -85,11 +85,17 @@ export default function Sidebar({ isOpen, onClose }) {
     }
   };
 
-  if (!isOpen && slideAnim._value === -SIDEBAR_WIDTH) return null;
+  // Always render to prevent removeChild DOM errors on web
 
   return (
     <View 
-      style={[styles.fullOverlay, { pointerEvents: isOpen ? 'auto' : 'none' }]}
+      style={[
+        styles.fullOverlay, 
+        { 
+          pointerEvents: isOpen ? 'auto' : 'none',
+          opacity: isOpen ? 1 : 0
+        }
+      ]}
     >
       {/* Overlay לעצירת לחיצה בחוץ */}
       <TouchableOpacity 

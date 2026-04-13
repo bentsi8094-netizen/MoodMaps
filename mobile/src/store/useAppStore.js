@@ -49,6 +49,7 @@ export const useAppStore = create(
               
               // אתחול סוקט
               const socket = initSocket(token);
+              socket.off("new_notification");
               socket.on("new_notification", (note) => {
                 get().add_new_notification(note);
               });
@@ -79,15 +80,21 @@ export const useAppStore = create(
 
             // אתחול סוקט
             const socket = initSocket(token);
+            // Cleanup old listeners to prevent duplication
             socket.off("new_notification");
-            socket.on("new_notification", (note) => {
-              get().add_new_notification(note);
+            
+            socket.on("new_notification", (notification) => {
+              console.log("[Socket] Received notification:", notification);
+              set(state => ({ 
+                notifications: [notification, ...state.notifications]
+              }));
             });
           }
           await Promise.all([
             get().fetch_posts(),
             get().sync_active_session(),
-            get().refresh_locations(true)
+            get().refresh_locations(true),
+            get().fetch_notifications()
           ]);
         } catch (e) {
           console.error("[Store] Login Error:", e.message);
@@ -106,7 +113,8 @@ export const useAppStore = create(
             messages: [], 
             active_posts: [], 
             comments: [],
-            notifications: []
+            notifications: [],
+            isSidebarOpen: false
           });
           update_api_token(null);
           disconnectSocket();
@@ -118,18 +126,21 @@ export const useAppStore = create(
         }
       },
 
-      update_user_mood: async (new_mood, sticker_url = null) => {
-        const { current_user } = get();
-        if (!current_user?.id) return { success: false };
+      update_user_mood: async (new_mood, sticker_url) => {
         try {
-          const response = await user_service.update_mood(new_mood, sticker_url);
-          if (response?.success) {
-            set({ current_user: { ...current_user, mood: new_mood, sticker_url } });
+          // Logic Sync: Use post_service to update active session status (Consistency with Web)
+          const response = await post_service.update_active_status(new_mood, sticker_url);
+          if (response.success) {
+            set(state => ({
+              current_user: { ...state.current_user, active_mood: new_mood, active_sticker: sticker_url }
+            }));
+            await get().sync_active_session();
             return { success: true };
           }
           return response;
-        } catch (e) {
-          return { success: false, error: e.message };
+        } catch (error) {
+          console.error("[Store] update_user_mood error:", error);
+          return { success: false, error: 'update_failed' };
         }
       },
       update_profile: async (data) => {
@@ -209,7 +220,11 @@ export const useAppStore = create(
         const { current_user, fetch_posts } = get();
         if (!current_user?.id) return { success: false, error: "no_user" };
         
+        set({ is_loading_feed: true });
         try {
+          // Race Condition Fix: Refresh locations BEFORE creating post to ensure latest coords
+          await get().refresh_locations(true);
+          
           const result = await post_service.create_post(post_data);
           
           if (result?.success) {
@@ -234,12 +249,13 @@ export const useAppStore = create(
               await fetch_posts();
             }
             await get().sync_active_session();
-            await get().refresh_locations(true);
             return { success: true };
           }
           return result;
         } catch (error) { 
           return { success: false, error: error.message }; 
+        } finally {
+          set({ is_loading_feed: false });
         }
       },
 

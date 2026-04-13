@@ -54,6 +54,7 @@ export const useAppStore = create(
                   
                   // אתחול סוקט
                   const socket = initSocket(token);
+                  socket.off("new_notification"); // מניעת כפילויות
                   socket.on("new_notification", (note) => {
                     get().add_new_notification(note);
                   });
@@ -85,9 +86,14 @@ export const useAppStore = create(
             
             // אתחול סוקט
             const socket = initSocket(token);
-            socket.off("new_notification"); // ניקוי מאזינים קודמים אם היו
-            socket.on("new_notification", (note) => {
-              get().add_new_notification(note);
+            // Cleanup old listeners to prevent duplication
+            socket.off("new_notification");
+            
+            socket.on("new_notification", (notification) => {
+              console.log("[Socket] Received notification:", notification);
+              set(state => ({ 
+                notifications: [notification, ...state.notifications]
+              }));
             });
           }
           
@@ -115,7 +121,8 @@ export const useAppStore = create(
             messages: [], 
             active_posts: [], 
             comments: [],
-            notifications: []
+            notifications: [],
+            isSidebarOpen: false
           });
           update_api_token(null);
           disconnectSocket();
@@ -127,18 +134,21 @@ export const useAppStore = create(
         }
       },
 
-      update_user_mood: async (new_mood, sticker_url = null) => {
-        const { current_user } = get();
-        if (!current_user?.id) return { success: false };
+      update_user_mood: async (new_mood, sticker_url) => {
         try {
+          // Logic Sync: Consistent service mapping with Mobile/Backend
           const response = await post_service.update_active_status(new_mood, sticker_url);
-          if (response?.success) {
-            set({ current_user: { ...current_user, mood: new_mood, sticker_url } });
+          if (response.success) {
+            set(state => ({
+              current_user: { ...state.current_user, active_mood: new_mood, active_sticker: sticker_url }
+            }));
+            await get().sync_active_session();
             return { success: true };
           }
           return response;
-        } catch (e) {
-          return { success: false, error: e.message };
+        } catch (error) {
+          console.error("[Store] update_user_mood error:", error);
+          return { success: false, error: 'update_failed' };
         }
       },
       update_profile: async (data) => {
