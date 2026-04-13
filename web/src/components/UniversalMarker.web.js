@@ -6,7 +6,7 @@ const UniversalMarker = ({ coordinate, children, onPress, map, zIndex, anchor })
   const containerRef = useRef(document.createElement('div'));
 
   useEffect(() => {
-    if (!map || !window.google) return;
+    if (!map || !window.google || !window.google.maps || !window.google.maps.OverlayView) return;
 
     class CustomOverlay extends window.google.maps.OverlayView {
       constructor(container, coordinate, onClick) {

@@ -51,6 +51,13 @@ const UniversalMapView = forwardRef(({
     function initMap() {
       if (!mapDivRef.current) return;
       
+      // Check if google.maps.Map is available to prevent TypeError
+      if (!window.google || !window.google.maps || !window.google.maps.Map) {
+        console.log("[UniversalMapView] Google Maps not fully loaded, retrying in 100ms...");
+        setTimeout(initMap, 100);
+        return;
+      }
+      
       const map = new window.google.maps.Map(mapDivRef.current, {
         center: { 
           lat: initialRegion?.latitude || 31.7683, 
