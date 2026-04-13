@@ -1,4 +1,4 @@
-import React, { useMemo, useState, memo, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, memo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { useAppStore } from '../store/useAppStore';

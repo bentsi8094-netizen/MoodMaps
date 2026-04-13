@@ -164,7 +164,7 @@ export default function SignInScreen({ on_login }) {
 }
 
 const styles = StyleSheet.create({
-  container: { width: '100% transition: "all 0.3s ease"' },
+  container: { width: '100%' },
   input: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 15, paddingRight: 15, color: 'white', marginBottom: 15, textAlign: 'right', fontSize: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   error_border: { borderColor: '#ff4d4d' },
   password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },

@@ -89,13 +89,22 @@ function AppWithHeader() {
   const isSidebarOpen = useAppStore(state => state.isSidebarOpen);
   const setSidebarOpen = useAppStore(state => state.setSidebarOpen);
 
-  return (
-    <View style={styles.full_screen}>
-      <AppHeader />
-      <MainTabs />
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
-    </View>
-  );
+    console.log("[Navigator] User authenticated. Mounting AppRoot/AppWithHeader.");
+    return (
+      <View style={styles.full_screen}>
+        <AppHeader />
+        <MainTabs />
+        {typeof isSidebarOpen !== 'undefined' ? (
+          <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
+        ) : (
+          console.error("[Navigator Critical] isSidebarOpen is undefined in AppWithHeader!")
+        )}
+      </View>
+    );
+  } catch (err) {
+    console.error("[Navigator Crash] Error in AppWithHeader:", err);
+    return <View style={{flex:1, backgroundColor:'red'}}><Text>Navigation Error: {err.message}</Text></View>;
+  }
 }
 
 export default function RootNavigator() {

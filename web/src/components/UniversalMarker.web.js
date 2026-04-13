@@ -45,8 +45,12 @@ const UniversalMarker = ({ coordinate, children, onPress, map, zIndex, anchor })
       }
 
       onRemove() {
-        if (this.container.parentNode) {
-          this.container.parentNode.removeChild(this.container);
+        if (this.container && this.container.parentNode) {
+          try {
+            this.container.parentNode.removeChild(this.container);
+          } catch (e) {
+            console.warn("[UniversalMarker] parentNode mismatch on removeChild:", e);
+          }
         }
       }
     }
