@@ -5,17 +5,25 @@ const jwt = require('jsonwebtoken');
 const register = async (req, res) => {
     const { first_name, last_name, email, password, user_alias } = req.body;
     const avatar_url = req.file ? req.file.path : null;
+    const errors = {};
 
     try {
-        if (!first_name || !last_name || !email || !password || !user_alias || !avatar_url) {
-            return res.status(400).json({
-                success: false,
-                error: "כל השדות הם חובה, כולל תמונת פרופיל"
-            });
+        // ולידציה בסיסית של שדות חובה
+        if (!first_name?.trim()) errors.first_name = "שם פרטי הוא שדה חובה";
+        if (!last_name?.trim()) errors.last_name = "שם משפחה הוא שדה חובה";
+        if (!email?.trim()) errors.email = "אימייל הוא שדה חובה";
+        if (!password) errors.password = "סיסמה היא שדה חובה";
+        else if (password.length < 6) errors.password = "סיסמה חייבת להכיל לפחות 6 תווים";
+        if (!user_alias?.trim()) errors.user_alias = "כינוי הוא שדה חובה";
+        if (!avatar_url) errors.profile_image = "חובה להעלות תמונת פרופיל";
+
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({ success: false, errors });
         }
 
         const clean_email = email.trim().toLowerCase();
 
+        // בדיקה אם המייל קיים
         const { data: existing_user } = await supabase
             .from('auth_manual')
             .select('id')
@@ -23,12 +31,16 @@ const register = async (req, res) => {
             .maybeSingle();
 
         if (existing_user) {
-            return res.status(400).json({ success: false, error: "האימייל כבר קיים במערכת" });
+            return res.status(400).json({ 
+                success: false, 
+                errors: { email: "האימייל כבר קיים במערכת" } 
+            });
         }
 
         const salt = await bcrypt.genSalt(10);
         const hashed_password = await bcrypt.hash(password, salt);
 
+        // יצירת רשומת אבטחה
         const { data: auth_user, error: auth_error } = await supabase
             .from('auth_manual')
             .insert([{ email: clean_email, password_hash: hashed_password }])
@@ -37,6 +49,7 @@ const register = async (req, res) => {
 
         if (auth_error) throw auth_error;
 
+        // יצירת פרופיל משתמש
         const { data: new_profile, error: profile_error } = await supabase
             .from('profiles')
             .insert([{
@@ -50,10 +63,14 @@ const register = async (req, res) => {
             .single();
 
         if (profile_error) {
+            // אם הפרופיל נכשל, נמחק את רשומת ה-auth כדי למנוע יתמות
             await supabase.from('auth_manual').delete().eq('id', auth_user.id);
             
             if (profile_error.code === '23505') {
-                return res.status(400).json({ success: false, error: "הכינוי (alias) כבר תפוס על ידי משתמש אחר" });
+                return res.status(400).json({ 
+                    success: false, 
+                    errors: { user_alias: "הכינוי (alias) כבר תפוס על ידי משתמש אחר" } 
+                });
             }
             throw profile_error;
         }
@@ -72,15 +89,24 @@ const register = async (req, res) => {
 
     } catch (err) {
         console.error("Register Error:", err.message);
-        res.status(500).json({ success: false, error: "שגיאה פנימית בתהליך ההרשמה" });
+        res.status(500).json({ 
+            success: false, 
+            error: "שגיאה פנימית בתהליך ההרשמה",
+            details: err.message // עוזר לאיתור בעיות בזמן אמת
+        });
     }
 };
 
 const login = async (req, res) => {
     const { email, password } = req.body;
+    const errors = {};
+
     try {
-        if (!email || !password) {
-            return res.status(400).json({ success: false, error: "יש להזין אימייל וסיסמה" });
+        if (!email?.trim()) errors.email = "יש להזין אימייל";
+        if (!password) errors.password = "יש להזין סיסמה";
+
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({ success: false, errors });
         }
 
         const clean_email = email.trim().toLowerCase();
@@ -92,13 +118,15 @@ const login = async (req, res) => {
             .maybeSingle();
 
         if (!auth_data || auth_error) {
-            return res.status(400).json({ success: false, error: "פרטי התחברות שגויים" });
+            return res.status(400).json({ 
+                success: false, 
+                error: "פרטי התחברות שגויים",
+                errors: { general: "המייל או הסיסמה אינם תואמים" }
+            });
         }
 
         const is_match = await bcrypt.compare(password, auth_data.password_hash);
         
-        // אבטחה מחמירה: אם המשתמש מנסה להיכנס עם "סיסמה סטטית" של גוגל, 
-        // אנחנו דורשים אימות חי מול גוגל בשרת.
         if (password === "GOOGLE_AUTH_SERVICE") {
             const google_token = req.body.google_token;
             if (!google_token) {
@@ -106,7 +134,6 @@ const login = async (req, res) => {
             }
             
             try {
-                // אימות הטוקן מול שרת גוגל (כירורגי ומאובטח)
                 const axios = require('axios');
                 const gRes = await axios.get(`https://www.googleapis.com/oauth2/v3/userinfo`, {
                     headers: { Authorization: `Bearer ${google_token}` }
@@ -119,7 +146,11 @@ const login = async (req, res) => {
                 return res.status(401).json({ success: false, error: "טוקן גוגל פג תוקף או לא תקין" });
             }
         } else if (!is_match) {
-            return res.status(400).json({ success: false, error: "פרטי התחברות שגויים" });
+            return res.status(400).json({ 
+                success: false, 
+                error: "פרטי התחברות שגויים",
+                errors: { general: "המייל או הסיסמה אינם תואמים" }
+            });
         }
 
         const { data: profile_data, error: profile_error } = await supabase

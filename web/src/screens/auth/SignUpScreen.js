@@ -36,6 +36,25 @@ export default function SignUpScreen({ on_register }) {
     set_step(next_step);
   };
 
+  const handle_step_2_continue = async () => {
+    if (!validate_current_step()) return;
+
+    set_is_loading(true);
+    set_errors({});
+    try {
+      const resp = await user_service.check_email(form_data.email.trim().toLowerCase());
+      if (resp.success && resp.exists === false) {
+        navigate_to_step(3);
+      } else {
+        set_errors({ email: resp.error || "האימייל כבר קיים במערכת" });
+      }
+    } catch (err) {
+      set_errors({ general: "נכשלה בדיקה מול השרת" });
+    } finally {
+      set_is_loading(false);
+    }
+  };
+
   const handle_generate_new_alias = useCallback(() => {
     const suggested = generate_alias(form_data.first_name);
     set_form_data(prev => ({ ...prev, user_alias: suggested }));
@@ -68,7 +87,7 @@ export default function SignUpScreen({ on_register }) {
     }
 
     if (step === 3) {
-      if (!image_uri) current_errors.image = "חובה להעלות תמונה";
+      if (!image_uri) current_errors.profile_image = "חובה להעלות תמונה";
       if (form_data.user_alias.length < 3) current_errors.user_alias = "כינוי חייב להכיל לפחות 3 תווים";
     }
 
@@ -126,8 +145,8 @@ export default function SignUpScreen({ on_register }) {
       const safe_file_name = file_name.includes('.') ? file_name : `${file_name}.jpg`;
       
       if (Platform.OS === 'web') {
-        const response = await fetch(image_uri);
-        const blob = await response.blob();
+        const img_response = await fetch(image_uri);
+        const blob = await img_response.blob();
         data.append('profile_image', blob, safe_file_name);
       } else {
         data.append('profile_image', {
@@ -141,7 +160,16 @@ export default function SignUpScreen({ on_register }) {
       if (response.success) {
         on_register(response.user, response.token);
       } else {
-        set_errors({ general: response.error || "רישום נכשל" });
+        if (response.errors) {
+          set_errors(response.errors);
+          
+          // ניווט אוטומטי לשלב השגיאה
+          if (response.errors.first_name || response.errors.last_name) set_step(1);
+          else if (response.errors.email || response.errors.password) set_step(2);
+          else if (response.errors.profile_image || response.errors.user_alias) set_step(3);
+        } else {
+          set_errors({ general: response.error || "רישום נכשל" });
+        }
       }
     } catch (err) {
       Alert.alert("שגיאת תקשורת", "החיבור לשרת נכשל.");
@@ -225,8 +253,16 @@ export default function SignUpScreen({ on_register }) {
                 <TouchableOpacity style={[styles.button, styles.back_btn]} onPress={() => navigate_to_step(1)}>
                   <Text style={styles.button_text}>חזור</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, {flex: 2}]} onPress={() => validate_current_step() && navigate_to_step(3)}>
-                  <Text style={styles.button_text}>המשך</Text>
+                <TouchableOpacity 
+                  style={[styles.button, {flex: 2}]} 
+                  onPress={handle_step_2_continue}
+                  disabled={is_loading}
+                >
+                  {is_loading && step === 2 ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.button_text}>המשך</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -238,8 +274,8 @@ export default function SignUpScreen({ on_register }) {
                 {image_uri ? (
                   <Image source={{ uri: image_uri }} style={styles.preview_image} />
                 ) : (
-                  <View style={[styles.image_placeholder, errors.image && {borderColor: '#ff4d4d', borderWidth: 2}]}>
-                    <Text style={{color: errors.image ? '#ff4d4d' : '#aaa', fontSize: 12}}>תמונה חובה</Text>
+                  <View style={[styles.image_placeholder, errors.profile_image && {borderColor: '#ff4d4d', borderWidth: 2}]}>
+                    <Text style={{color: errors.profile_image ? '#ff4d4d' : '#aaa', fontSize: 12}}>תמונה חובה</Text>
                   </View>
                 )}
                 <View style={styles.media_actions}>
@@ -251,7 +287,7 @@ export default function SignUpScreen({ on_register }) {
                   </TouchableOpacity>
                 </View>
               </View>
-              <ErrorText error={errors.image} />
+              <ErrorText error={errors.profile_image} />
 
               <TextInput style={styles.input} placeholder="כינוי בקהילה" placeholderTextColor="#ccc" autoCorrect={false} value={form_data.user_alias} onChangeText={(v) => update_field('user_alias', v.replace(/\s/g, '_'))} />
               <ErrorText error={errors.user_alias} />

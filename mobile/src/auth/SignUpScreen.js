@@ -13,6 +13,7 @@ import {
   Platform 
 } from "react-native";
 import GlassCard from "../components/GlassCard";
+import ErrorText from "../components/ErrorText";
 import { user_service } from "../services/userService"; 
 import { pick_image } from "../utils/imageHelper";
 import { generate_alias } from "../utils/aliasGenerator";
@@ -25,10 +26,30 @@ export default function SignUpScreen({ on_register }) {
   const [form_data, set_form_data] = useState({
     first_name: "", last_name: "", email: "", password: "", user_alias: ""
   });
+  const [errors, set_errors] = useState({});
 
   const navigate_to_step = (next_step) => {
     Keyboard.dismiss();
     set_step(next_step);
+  };
+
+  const handle_step_2_continue = async () => {
+    if (!validate_current_step()) return;
+
+    set_is_loading(true);
+    set_errors({});
+    try {
+      const resp = await user_service.check_email(form_data.email.trim().toLowerCase());
+      if (resp.success && resp.exists === false) {
+        navigate_to_step(3);
+      } else {
+        set_errors({ email: resp.error || "האימייל כבר קיים במערכת" });
+      }
+    } catch (err) {
+      set_errors({ general: "נכשלה בדיקה מול השרת" });
+    } finally {
+      set_is_loading(false);
+    }
   };
 
   const handle_generate_new_alias = useCallback(() => {
@@ -49,26 +70,33 @@ export default function SignUpScreen({ on_register }) {
 
   const validate_current_step = () => {
     const { first_name, last_name, email, password } = form_data;
+    const current_errors = {};
+
     if (step === 1) {
-      if (first_name.trim().length < 2 || last_name.trim().length < 2) {
-        Alert.alert("שם חסר", "נא להזין שם תקין");
-        return false;
-      }
+      if (first_name.trim().length < 2) current_errors.first_name = "שם פרטי חייב להכיל לפחות 2 תווים";
+      if (last_name.trim().length < 2) current_errors.last_name = "שם משפחה חייב להכיל לפחות 2 תווים";
     }
+    
     if (step === 2) {
       const email_regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!email_regex.test(email.trim()) || password.length < 6) {
-        Alert.alert("פרטים לא תקינים", "בדוק אימייל או אורך סיסמה");
-        return false;
-      }
+      if (!email_regex.test(email.trim())) current_errors.email = "כתובת אימייל לא תקינה";
+      if (password.length < 6) current_errors.password = "סיסמה חייבת להכיל לפחות 6 תווים";
     }
-    return true;
+
+    if (step === 3) {
+      if (!image_uri) current_errors.profile_image = "חובה להעלות תמונה";
+      if (form_data.user_alias.length < 3) current_errors.user_alias = "כינוי חייב להכיל לפחות 3 תווים";
+    }
+
+    set_errors(current_errors);
+    return Object.keys(current_errors).length === 0;
   };
 
   const handle_submit = async () => {
-    if (!image_uri) return Alert.alert("תמונה חובה", "חובה להעלות תמונת פרופיל כדי להמשיך");
+    if (!validate_current_step()) return;
     
     set_is_loading(true);
+    set_errors({});
     try {
       const data = new FormData();
       data.append('first_name', form_data.first_name.trim());
@@ -88,7 +116,17 @@ export default function SignUpScreen({ on_register }) {
       if (response.success) {
         on_register(response.user, response.token);
       } else {
-        Alert.alert("רישום נכשל", response.error || "פרטי הרישום תפוסים");
+        if (response.errors) {
+          set_errors(response.errors);
+          
+          // ניווט אוטומטי לשלב שבו נמצאה השגיאה הראשונה
+          if (response.errors.first_name || response.errors.last_name) set_step(1);
+          else if (response.errors.email || response.errors.password) set_step(2);
+          else if (response.errors.profile_image || response.errors.user_alias) set_step(3);
+          
+        } else {
+          Alert.alert("רישום נכשל", response.error || "אירעה שגיאה לא צפויה");
+        }
       }
     } catch (err) {
       Alert.alert("שגיאת תקשורת", "החיבור לשרת נכשל.");
@@ -97,7 +135,12 @@ export default function SignUpScreen({ on_register }) {
     }
   };
 
-  const update_field = (field, value) => set_form_data(prev => ({ ...prev, [field]: value }));
+  const update_field = (field, value) => {
+    set_form_data(prev => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      set_errors(prev => ({ ...prev, [field]: null }));
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -110,8 +153,12 @@ export default function SignUpScreen({ on_register }) {
           
           {step === 1 && (
             <View>
-              <TextInput style={styles.input} placeholder="שם פרטי" placeholderTextColor="#ccc" value={form_data.first_name} onChangeText={(v) => update_field('first_name', v)} />
-              <TextInput style={styles.input} placeholder="שם משפחה" placeholderTextColor="#ccc" value={form_data.last_name} onChangeText={(v) => update_field('last_name', v)} />
+              <TextInput style={[styles.input, errors.first_name && styles.error_border]} placeholder="שם פרטי" placeholderTextColor="#ccc" value={form_data.first_name} onChangeText={(v) => update_field('first_name', v)} />
+              <ErrorText error={errors.first_name} />
+              
+              <TextInput style={[styles.input, errors.last_name && styles.error_border]} placeholder="שם משפחה" placeholderTextColor="#ccc" value={form_data.last_name} onChangeText={(v) => update_field('last_name', v)} />
+              <ErrorText error={errors.last_name} />
+              
               <TouchableOpacity style={styles.button} onPress={() => validate_current_step() && navigate_to_step(2)}>
                 <Text style={styles.button_text}>המשך</Text>
               </TouchableOpacity>
@@ -120,19 +167,31 @@ export default function SignUpScreen({ on_register }) {
 
           {step === 2 && (
             <View>
-              <TextInput style={styles.input} placeholder="אימייל" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} placeholderTextColor="#ccc" value={form_data.email} onChangeText={(v) => update_field('email', v)} />
-              <View style={styles.password_container}>
+              <TextInput style={[styles.input, errors.email && styles.error_border]} placeholder="אימייל" keyboardType="email-address" autoCapitalize="none" autoCorrect={false} placeholderTextColor="#ccc" value={form_data.email} onChangeText={(v) => update_field('email', v)} />
+              <ErrorText error={errors.email} />
+              
+              <View style={[styles.password_container, errors.password && styles.error_border]}>
                 <TextInput style={[styles.input, { flex: 1, marginBottom: 0 }]} placeholder="סיסמה" secureTextEntry={!show_password} placeholderTextColor="#ccc" value={form_data.password} onChangeText={(v) => update_field('password', v)} />
                 <TouchableOpacity style={styles.eye_icon} onPress={() => set_show_password(!show_password)}>
                   <Text style={{ fontSize: 18 }}>{show_password ? "👁️" : "🙈"}</Text>
                 </TouchableOpacity>
               </View>
+              <ErrorText error={errors.password} />
+              
               <View style={styles.row}>
                 <TouchableOpacity style={[styles.button, styles.back_btn]} onPress={() => navigate_to_step(1)}>
                   <Text style={styles.button_text}>חזור</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.button, {flex: 2}]} onPress={() => validate_current_step() && navigate_to_step(3)}>
-                  <Text style={styles.button_text}>המשך</Text>
+                <TouchableOpacity 
+                  style={[styles.button, {flex: 2}]} 
+                  onPress={handle_step_2_continue}
+                  disabled={is_loading}
+                >
+                  {is_loading && step === 2 ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <Text style={styles.button_text}>המשך</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
@@ -144,8 +203,8 @@ export default function SignUpScreen({ on_register }) {
                 {image_uri ? (
                   <Image source={{ uri: image_uri }} style={styles.preview_image} />
                 ) : (
-                  <View style={styles.image_placeholder}>
-                    <Text style={{color: '#aaa', fontSize: 12}}>תמונה חובה</Text>
+                  <View style={[styles.image_placeholder, errors.profile_image && styles.error_border]}>
+                    <Text style={{color: errors.profile_image ? '#ff4d4d' : '#aaa', fontSize: 12}}>תמונה חובה</Text>
                   </View>
                 )}
                 <View style={styles.media_actions}>
@@ -157,7 +216,11 @@ export default function SignUpScreen({ on_register }) {
                   </TouchableOpacity>
                 </View>
               </View>
-              <TextInput style={styles.input} placeholder="כינוי בקהילה" placeholderTextColor="#ccc" autoCorrect={false} value={form_data.user_alias} onChangeText={(v) => update_field('user_alias', v.replace(/\s/g, '_'))} />
+              <ErrorText error={errors.profile_image} />
+              
+              <TextInput style={[styles.input, errors.user_alias && styles.error_border]} placeholder="כינוי בקהילה" placeholderTextColor="#ccc" autoCorrect={false} value={form_data.user_alias} onChangeText={(v) => update_field('user_alias', v.replace(/\s/g, '_'))} />
+              <ErrorText error={errors.user_alias} />
+              
               <TouchableOpacity onPress={handle_generate_new_alias} style={styles.alias_refresh}>
                 <Text style={styles.alias_refresh_text}>🎲 הצע שם אחר</Text>
               </TouchableOpacity>
@@ -181,8 +244,9 @@ const styles = StyleSheet.create({
   container: { /* flex: 1 הוסר כדי למנוע מתיחה */ }, 
   scroll_content: { paddingVertical: 20, paddingHorizontal: 20, flexGrow: 1, justifyContent: 'center' }, 
   step_indicator: { color: '#00b4d8', textAlign: 'center', marginBottom: 20, fontSize: 14, fontWeight: '600' },
-  input: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 15, color: 'white', marginBottom: 15, textAlign: 'right' },
-  password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, overflow: 'hidden' },
+  input: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 15, color: 'white', marginBottom: 15, textAlign: 'right', borderWidth: 1, borderColor: 'transparent' },
+  error_border: { borderColor: '#ff4d4d' },
+  password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, overflow: 'hidden', borderWidth: 1, borderColor: 'transparent' },
   eye_icon: { paddingHorizontal: 15 },
   button: { backgroundColor: '#00b4d8', padding: 15, borderRadius: 12, alignItems: 'center', height: 55, justifyContent: 'center' },
   submit_btn: { backgroundColor: '#0077b6' },

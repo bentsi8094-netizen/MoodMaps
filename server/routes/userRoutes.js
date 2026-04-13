@@ -10,6 +10,9 @@ router.post('/register', upload.single('profile_image'), user_controller.registe
 // התחברות
 router.post('/login', user_controller.login);
 
+// בדיקת זמינות אימייל
+router.post('/check-email', user_controller.check_email);
+
 // שליפת פרופיל אישי
 router.get('/profile', protect, user_controller.get_profile);
 

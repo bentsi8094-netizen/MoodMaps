@@ -28,25 +28,35 @@ export default function SignInScreen({ on_login }) {
 
   const handle_login = async () => {
     const { email, password } = form_data;
-    if (!email || !password) {
-      set_errors({ 
-        email: !email ? "אימייל חסר" : null,
-        password: !password ? "סיסמה חסרה" : null
-      });
+    const current_errors = {};
+
+    // ולידציית פורמט (Regex)
+    const email_regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email) current_errors.email = "אימייל חסר";
+    else if (!email_regex.test(email.trim())) current_errors.email = "פורמט אימייל לא תקין";
+    
+    if (!password) current_errors.password = "סיסמה חסרה";
+
+    if (Object.keys(current_errors).length > 0) {
+      set_errors(current_errors);
       return;
     }
 
     set_is_loading(true);
     set_errors({});
     try {
-      const response = await user_service.login(email, password);
+      const response = await user_service.login(email.trim().toLowerCase(), password);
       if (response.success) {
         await AsyncStorage.setItem('user_token', response.token);
         await AsyncStorage.setItem('user_data', JSON.stringify(response.user));
         update_api_token(response.token);
         on_login(response.user);
       } else {
-        set_errors({ general: response.error || 'התחברות נכשלה' });
+        if (response.errors) {
+          set_errors(response.errors);
+        } else {
+          set_errors({ general: response.error || 'התחברות נכשלה' });
+        }
       }
     } catch (err) {
       set_errors({ general: 'שגיאת תקשורת' });
@@ -96,7 +106,7 @@ export default function SignInScreen({ on_login }) {
         <ErrorText error={errors.general} />
 
         <TextInput 
-          style={styles.input} 
+          style={[styles.input, errors.email && styles.error_border]} 
           placeholder="אימייל" 
           placeholderTextColor="rgba(255,255,255,0.5)" 
           keyboardType="email-address"
@@ -107,7 +117,7 @@ export default function SignInScreen({ on_login }) {
         />
         <ErrorText error={errors.email} />
 
-        <View style={styles.password_container}>
+        <View style={[styles.password_container, errors.password && styles.error_border]}>
           <TouchableOpacity 
             style={styles.eye_icon} 
             onPress={() => set_show_password(!show_password)}
@@ -156,6 +166,7 @@ export default function SignInScreen({ on_login }) {
 const styles = StyleSheet.create({
   container: { width: '100% transition: "all 0.3s ease"' },
   input: { backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 15, paddingRight: 15, color: 'white', marginBottom: 15, textAlign: 'right', fontSize: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  error_border: { borderColor: '#ff4d4d' },
   password_container: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, marginBottom: 15, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   eye_icon: { width: 50, height: '100%', justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
   button: { backgroundColor: '#00b4d8', padding: 15, borderRadius: 12, alignItems: 'center', height: 55, justifyContent: 'center', marginTop: 5 },

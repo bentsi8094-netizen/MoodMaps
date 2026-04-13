@@ -25,7 +25,10 @@ export const user_service = {
   register_with_image: async (form_data) => {
     const result = await api_client.post('/api/users/register', form_data);
     return normalize_user(result);
-  }
+  },
+
+  check_email: (email) => 
+    api_client.post('/api/users/check-email', { email })
 };
 
 export default user_service;

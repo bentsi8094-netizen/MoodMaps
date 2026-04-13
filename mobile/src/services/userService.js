@@ -27,6 +27,9 @@ export const user_service = {
     return normalize_user(result);
   },
 
+  check_email: (email) => 
+    api_client.post('/api/users/check-email', { email }),
+
   update_mood: (last_mood, last_sticker_url) => 
     api_client.post('/api/users/update-mood', { 
       last_mood, 

@@ -62,6 +62,7 @@ const request = async (endpoint, options = {}) => {
       return { 
         success: false, 
         error: data.error || data.message || `Error ${response.status}`,
+        errors: data.errors || {},
         status: response.status 
       };
     }
