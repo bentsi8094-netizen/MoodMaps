@@ -1,4 +1,4 @@
-import React, { useContext, useCallback, useRef, useEffect } from 'react';
+import React, { useContext, useCallback, useRef, useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, StatusBar, TouchableOpacity, Text, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
@@ -102,6 +102,8 @@ export default function RootNavigator() {
   const current_user = useAppStore(state => state.current_user);
   const is_loading = useAppStore(state => state.is_loading_user);
   const init_auth = useAppStore(state => state.init_auth);
+  
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     init_auth();

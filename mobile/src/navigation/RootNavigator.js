@@ -1,4 +1,4 @@
-import React, { useContext, useCallback, useRef, useEffect } from 'react';
+import React, { useContext, useCallback, useRef, useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator, StatusBar, TouchableOpacity, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
