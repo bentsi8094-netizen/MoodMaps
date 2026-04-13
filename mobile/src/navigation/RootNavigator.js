@@ -16,7 +16,6 @@ import UserMainScreen from '../auth/UserMainScreen';
 import MainTabs from './MainTabs';
 
 const Stack = createStackNavigator();
-const Stack = createStackNavigator();
 
 const TransparentTheme = {
   ...DefaultTheme,
