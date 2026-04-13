@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: 'transparent', 
-    marginBottom: 110, // Added another ~2mm for perfect clearance
+    marginBottom: Platform.OS === 'web' ? 140 : 110, // Increased for web clearance
     borderRadius: 20, 
     overflow: 'hidden', 
     marginHorizontal: 22, // Wider side margins (2mm per side)

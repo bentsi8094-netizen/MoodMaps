@@ -23,40 +23,11 @@ const UniversalMapView = forwardRef(({
     }
   }));
   useEffect(() => {
-    // Load Google Maps script if not loaded
     const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyDfh_ojB5d0L3Vs3Nu6k4berPbvRjzZvuI";
     
-    if (!window.google) {
-      if (!apiKey) {
-        console.warn("Google Maps API Key is missing. Set EXPO_PUBLIC_GOOGLE_MAPS_API_KEY in your .env file.");
-      }
-      
-      const scriptId = 'google-maps-script';
-      if (!document.getElementById(scriptId)) {
-        const script = document.createElement('script');
-        script.id = scriptId;
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => initMap();
-        script.onerror = () => {
-          console.error("Failed to load Google Maps script. Check your API key and internet connection.");
-        };
-        document.head.appendChild(script);
-      }
-    } else {
-      initMap();
-    }
-
-    function initMap() {
+    // Define Global Callback for Google Maps
+    window.initMoodMap = () => {
       if (!mapDivRef.current) return;
-      
-      // Check if google.maps.Map is available to prevent TypeError
-      if (!window.google || !window.google.maps || !window.google.maps.Map) {
-        console.log("[UniversalMapView] Google Maps not fully loaded, retrying in 100ms...");
-        setTimeout(initMap, 100);
-        return;
-      }
       
       const map = new window.google.maps.Map(mapDivRef.current, {
         center: { 
@@ -79,7 +50,29 @@ const UniversalMapView = forwardRef(({
       googleMapRef.current = map;
       setMapInstance(map);
       if (onMapReady) onMapReady();
+    };
+
+    if (!window.google) {
+      const scriptId = 'google-maps-script';
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places&callback=initMoodMap`;
+        script.async = true;
+        script.defer = true;
+        script.onerror = () => {
+          console.error("Failed to load Google Maps script. Check your API key and internet connection.");
+        };
+        document.head.appendChild(script);
+      }
+    } else {
+      window.initMoodMap();
     }
+
+    return () => {
+      // Cleanup global callback if needed
+      delete window.initMoodMap;
+    };
   }, []);
 
   return (
