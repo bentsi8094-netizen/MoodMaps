@@ -89,6 +89,7 @@ function AppWithHeader() {
   const isSidebarOpen = useAppStore(state => state.isSidebarOpen);
   const setSidebarOpen = useAppStore(state => state.setSidebarOpen);
 
+  try {
     console.log("[Navigator] User authenticated. Mounting AppRoot/AppWithHeader.");
     return (
       <View style={styles.full_screen}>

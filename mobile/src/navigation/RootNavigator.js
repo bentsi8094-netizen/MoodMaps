@@ -45,40 +45,40 @@ function AppHeader() {
     }
   }, [logout_user]);
 
-  const display_name = (current_user?.first_name && current_user.first_name !== "משתמש") 
-                        ? current_user.first_name 
-                        : (current_user?.user_alias || "חבר");
+  const display_name = (current_user?.first_name && current_user.first_name !== "משתמש")
+    ? current_user.first_name
+    : (current_user?.user_alias || "חבר");
 
   return (
     <View style={styles.top_header}>
       <View style={styles.header_left}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             Haptics.selectionAsync();
             setSidebarOpen(true);
-          }} 
+          }}
           style={styles.hamburger_btn}
         >
           <View style={styles.hamburger_line} />
           <View style={[styles.hamburger_line, { width: 15, marginTop: 4 }]} />
           <View style={[styles.hamburger_line, { marginTop: 4 }]} />
         </TouchableOpacity>
-        
+
         <TouchableOpacity onPress={handle_logout} style={styles.logout_btn}>
           <Text style={styles.logout_text}>התנתק</Text>
         </TouchableOpacity>
       </View>
-      
+
       <View style={styles.user_section}>
         <Text style={styles.user_name}>היי, {display_name} 👋</Text>
-        <TouchableOpacity 
-          style={styles.avatar_container} 
+        <TouchableOpacity
+          style={styles.avatar_container}
           onPress={() => current_user?.avatar_url && useAppStore.getState().open_viewer(current_user.avatar_url)}
         >
           {current_user?.avatar_url ? (
-            <Image 
-              source={{ uri: current_user.avatar_url }} 
-              style={styles.header_avatar} 
+            <Image
+              source={{ uri: current_user.avatar_url }}
+              style={styles.header_avatar}
               contentFit="cover"
               transition={200}
             />
@@ -138,36 +138,36 @@ export default function RootNavigator() {
   return (
     <View style={[styles.full_screen, { backgroundColor: 'transparent' }]}>
       <StatusBar barStyle="light-content" />
-      <LinearGradient 
-        colors={current_user ? ['#00b4d8', '#9d4edd', '#f72585'] : ['#4c669f', '#3b5998', '#192f6a']} 
-        style={StyleSheet.absoluteFill} 
+      <LinearGradient
+        colors={current_user ? ['#00b4d8', '#9d4edd', '#f72585'] : ['#4c669f', '#3b5998', '#192f6a']}
+        style={StyleSheet.absoluteFill}
       />
       <SafeAreaView style={[styles.safe_area, { backgroundColor: 'transparent' }]}>
         <NavigationContainer theme={TransparentTheme}>
-            <Stack.Navigator 
-              screenOptions={{ 
-                headerShown: false, 
-                animationEnabled: false, 
-                detachPreviousScreen: false,
-                gestureEnabled: false, 
-                cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
-                cardStyle: { 
-                  backgroundColor: 'transparent',
-                  elevation: 0,
-                  shadowOpacity: 0,
-                  shadowColor: 'transparent',
-                } 
-              }}
-            >
-              {!current_user ? (
-                <Stack.Screen name="Auth" component={UserMainScreen}/>
-              ) : (
+          <Stack.Navigator
+            screenOptions={{
+              headerShown: false,
+              animationEnabled: false,
+              detachPreviousScreen: false,
+              gestureEnabled: false,
+              cardStyleInterpolator: CardStyleInterpolators.forNoAnimation,
+              cardStyle: {
+                backgroundColor: 'transparent',
+                elevation: 0,
+                shadowOpacity: 0,
+                shadowColor: 'transparent',
+              }
+            }}
+          >
+            {!current_user ? (
+              <Stack.Screen name="Auth" component={UserMainScreen} />
+            ) : (
               <Stack.Group>
-                  <Stack.Screen name="AppRoot" component={AppWithHeader} />
-                </Stack.Group>
-              )}
-            </Stack.Navigator>
-            <FullImageModal />
+                <Stack.Screen name="AppRoot" component={AppWithHeader} />
+              </Stack.Group>
+            )}
+          </Stack.Navigator>
+          <FullImageModal />
         </NavigationContainer>
       </SafeAreaView>
     </View>
@@ -178,13 +178,13 @@ const styles = StyleSheet.create({
   full_screen: { flex: 1 },
   center_container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#3b5998' },
   safe_area: { flex: 1, paddingBottom: 0 },
-  top_header: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
+  top_header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
     paddingTop: 10,
-    zIndex: 20 
+    zIndex: 20
   },
   user_name: { color: 'white', fontWeight: 'bold', fontSize: 16, marginRight: 10 },
   user_section: { flexDirection: 'row', alignItems: 'center' },
