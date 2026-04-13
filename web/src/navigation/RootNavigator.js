@@ -97,9 +97,7 @@ function AppWithHeader() {
         <MainTabs />
         {typeof isSidebarOpen !== 'undefined' ? (
           <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
-        ) : (
-          console.error("[Navigator Critical] isSidebarOpen is undefined in AppWithHeader!")
-        )}
+        ) : null}
       </View>
     );
   } catch (err) {
@@ -212,3 +210,5 @@ const styles = StyleSheet.create({
   hamburger_btn: { padding: 10, marginRight: 5, cursor: 'pointer' },
   hamburger_line: { height: 2, width: 20, backgroundColor: 'white', borderRadius: 1 },
 });
+/ /   F o r c e d   r e f r e s h   C o m m i t  
+ 
