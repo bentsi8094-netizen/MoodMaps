@@ -10,6 +10,7 @@ import { chat_service } from '../services/chatService';
 import { comment_service } from '../services/commentService';
 import { set_unauthorized_callback, update_api_token } from '../services/apiClient';
 import { API_BASE_URL } from '../constants/Config';
+import { initSocket, disconnectSocket } from '../utils/socketManager';
 
 const normalize_user_data = (raw_data) => {
   if (!raw_data) return null;
@@ -47,6 +48,13 @@ export const useAppStore = create(
                 const normalizedUser = normalize_user_data(response.user);
                 if (normalizedUser) {
                   set({ current_user: normalizedUser });
+                  
+                  // אתחול סוקט
+                  const socket = initSocket(token);
+                  socket.on("new_notification", (note) => {
+                    get().add_new_notification(note);
+                  });
+
                   await Promise.all([
                     get().fetch_posts(),
                     get().sync_active_session(),
@@ -71,6 +79,13 @@ export const useAppStore = create(
           if (token) {
             update_api_token(token);
             await AsyncStorage.setItem('user_token', token);
+            
+            // אתחול סוקט
+            const socket = initSocket(token);
+            socket.off("new_notification"); // ניקוי מאזינים קודמים אם היו
+            socket.on("new_notification", (note) => {
+              get().add_new_notification(note);
+            });
           }
           
           // Execute data fetching after token is guaranteed to be set
@@ -100,6 +115,7 @@ export const useAppStore = create(
             notifications: []
           });
           update_api_token(null);
+          disconnectSocket();
           await AsyncStorage.multiRemove(['user_token']);
         } catch (e) {
           console.error("[Store] Logout Error:", e.message);

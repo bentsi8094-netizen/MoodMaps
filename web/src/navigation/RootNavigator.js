@@ -7,7 +7,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAppStore } from '../store/useAppStore';
-import { setupWebNotificationListener, setupHistoryListener } from '../utils/notificationHelper';
 import Sidebar from '../components/Sidebar';
 import FullImageModal from '../components/FullImageModal';
 
@@ -106,27 +105,7 @@ export default function RootNavigator() {
 
   useEffect(() => {
     init_auth();
-
-    const subs = [];
-
-    // מאזין להתראות זמן אמת (ווב)
-    const cleanupNotifications = setupWebNotificationListener((newComment) => {
-      if (current_user && newComment.user_id !== current_user.id) {
-        console.log(`[Notification] New comment from ${newComment.user_alias}`);
-      }
-    });
-    subs.push(cleanupNotifications);
-
-    // מאזין להיסטוריית התראות (בווב) כדי לעדכן את ה-Sidebar בחי
-    if (current_user?.id) {
-      const cleanupHistory = setupHistoryListener(current_user.id, (note) => {
-        useAppStore.getState().add_new_notification(note);
-      });
-      subs.push(cleanupHistory);
-    }
-
-    return () => subs.forEach(cleanup => cleanup && cleanup());
-  }, [init_auth, current_user?.id]);
+  }, [init_auth]);
 
   if (is_loading) {
     return (
