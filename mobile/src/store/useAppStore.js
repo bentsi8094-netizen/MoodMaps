@@ -33,6 +33,9 @@ export const useAppStore = create(
       is_loading_notifications: false,
       target_session_id: null,
       viewer_image_url: null,
+      isSidebarOpen: false,
+
+      setSidebarOpen: (isOpen) => set({ isSidebarOpen: isOpen }),
 
       init_auth: async () => {
         set({ is_loading_user: true });

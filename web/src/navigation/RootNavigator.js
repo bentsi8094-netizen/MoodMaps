@@ -14,7 +14,7 @@ import UserMainScreen from '../screens/auth/UserMainScreen';
 import MainTabs from './MainTabs';
 
 const Stack = createStackNavigator();
-const SidebarContext = React.createContext();
+const Stack = createStackNavigator();
 
 const TransparentTheme = {
   ...DefaultTheme,
@@ -30,7 +30,7 @@ const TransparentTheme = {
 function AppHeader() {
   const current_user = useAppStore(state => state.current_user);
   const logout_user = useAppStore(state => state.logout_user);
-  const { setIsSidebarOpen } = React.useContext(SidebarContext);
+  const setSidebarOpen = useAppStore(state => state.setSidebarOpen);
   const is_logging_out = useRef(false);
 
 
@@ -51,7 +51,7 @@ function AppHeader() {
   return (
     <View style={styles.top_header}>
       <View style={styles.header_left}>
-        <TouchableOpacity onPress={() => setIsSidebarOpen(true)} style={styles.hamburger_btn}>
+        <TouchableOpacity onPress={() => setSidebarOpen(true)} style={styles.hamburger_btn}>
           <View style={styles.hamburger_line} />
           <View style={[styles.hamburger_line, { width: 14, marginTop: 4 }]} />
           <View style={[styles.hamburger_line, { marginTop: 4 }]} />
@@ -87,13 +87,14 @@ function AppHeader() {
 }
 
 function AppWithHeader() {
-  const { isSidebarOpen, setIsSidebarOpen } = React.useContext(SidebarContext);
+  const isSidebarOpen = useAppStore(state => state.isSidebarOpen);
+  const setSidebarOpen = useAppStore(state => state.setSidebarOpen);
 
   return (
     <View style={styles.full_screen}>
       <AppHeader />
       <MainTabs />
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
     </View>
   );
 }
@@ -102,8 +103,6 @@ export default function RootNavigator() {
   const current_user = useAppStore(state => state.current_user);
   const is_loading = useAppStore(state => state.is_loading_user);
   const init_auth = useAppStore(state => state.init_auth);
-  
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     init_auth();
@@ -123,7 +122,6 @@ export default function RootNavigator() {
     return (
       <View style={{ flex: 1, backgroundColor: '#192f6a', width: '100%', height: '100vh' }}>
         <NavigationContainer theme={TransparentTheme}>
-          <SidebarContext.Provider value={{ isSidebarOpen, setIsSidebarOpen }}>
             <Stack.Navigator 
             screenOptions={{ 
               headerShown: false, 
@@ -138,7 +136,6 @@ export default function RootNavigator() {
               )}
             </Stack.Navigator>
             <FullImageModal />
-          </SidebarContext.Provider>
         </NavigationContainer>
       </View>
     );

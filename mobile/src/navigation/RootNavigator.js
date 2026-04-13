@@ -16,7 +16,7 @@ import UserMainScreen from '../auth/UserMainScreen';
 import MainTabs from './MainTabs';
 
 const Stack = createStackNavigator();
-const SidebarContext = React.createContext();
+const Stack = createStackNavigator();
 
 const TransparentTheme = {
   ...DefaultTheme,
@@ -32,7 +32,7 @@ const TransparentTheme = {
 function AppHeader() {
   const current_user = useAppStore(state => state.current_user);
   const logout_user = useAppStore(state => state.logout_user);
-  const { setIsSidebarOpen } = React.useContext(SidebarContext);
+  const setSidebarOpen = useAppStore(state => state.setSidebarOpen);
   const is_logging_out = useRef(false);
 
   const handle_logout = useCallback(async () => {
@@ -56,7 +56,7 @@ function AppHeader() {
         <TouchableOpacity 
           onPress={() => {
             Haptics.selectionAsync();
-            setIsSidebarOpen(true);
+            setSidebarOpen(true);
           }} 
           style={styles.hamburger_btn}
         >
@@ -95,19 +95,19 @@ function AppHeader() {
 }
 
 function AppWithHeader() {
-  const { isSidebarOpen, setIsSidebarOpen } = React.useContext(SidebarContext);
+  const isSidebarOpen = useAppStore(state => state.isSidebarOpen);
+  const setSidebarOpen = useAppStore(state => state.setSidebarOpen);
 
   return (
     <View style={styles.full_screen}>
       <AppHeader />
       <MainTabs />
-      <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <Sidebar isOpen={isSidebarOpen} onClose={() => setSidebarOpen(false)} />
     </View>
   );
 }
 
 export default function RootNavigator() {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const current_user = useAppStore(state => state.current_user);
   const is_loading = useAppStore(state => state.is_loading_user);
   const init_auth = useAppStore(state => state.init_auth);
@@ -145,7 +145,6 @@ export default function RootNavigator() {
       />
       <SafeAreaView style={[styles.safe_area, { backgroundColor: 'transparent' }]}>
         <NavigationContainer theme={TransparentTheme}>
-          <SidebarContext.Provider value={{ isSidebarOpen, setIsSidebarOpen }}>
             <Stack.Navigator 
               screenOptions={{ 
                 headerShown: false, 
@@ -170,7 +169,6 @@ export default function RootNavigator() {
               )}
             </Stack.Navigator>
             <FullImageModal />
-          </SidebarContext.Provider>
         </NavigationContainer>
       </SafeAreaView>
     </View>
