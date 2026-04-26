@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, Platform } from 'react-native';
 import * as Animatable from 'react-native-animatable';
 
 const ErrorText = ({ error }) => {
@@ -25,9 +25,16 @@ const styles = StyleSheet.create({
     marginRight: 10,
     fontWeight: '600',
     textAlign: 'right',
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 1,
+    ...Platform.select({
+      web: {
+        textShadow: '0px 1px 1px rgba(0, 0, 0, 0.3)'
+      },
+      default: {
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 0, height: 1 },
+        textShadowRadius: 1,
+      }
+    })
   }
 });
 

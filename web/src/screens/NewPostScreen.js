@@ -287,11 +287,18 @@ const styles = StyleSheet.create({
     paddingVertical: 12, paddingHorizontal: 40, 
     borderRadius: 30, marginTop: 20, 
     alignSelf: 'center',
-    shadowColor: '#ff0073',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 4px 8px rgba(255, 0, 115, 0.3)'
+      },
+      default: {
+        shadowColor: '#ff0073',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 6
+      }
+    })
   },
   publish_btn_text: { color: 'white', fontWeight: 'bold', fontSize: 18 },
   btn_disabled: { backgroundColor: '#333', shadowOpacity: 0 },
@@ -304,11 +311,18 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     zIndex: 1000,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 10
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 4px 5px rgba(0, 0, 0, 0.3)'
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 10
+      }
+    })
   },
   emoji_hint_text: {
     color: 'white',
