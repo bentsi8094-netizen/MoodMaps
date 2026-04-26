@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, memo } from 'react';
-import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
+import { StyleSheet, View, TouchableOpacity, Text, Platform } from 'react-native';
 import UniversalMapView, { PROVIDER_GOOGLE } from '../components/UniversalMapView';
 import Marker from '../components/UniversalMarker';
 import { Ionicons } from '@expo/vector-icons';
