@@ -24,7 +24,7 @@ function CustomTabBar({ state, navigation }) {
   ];
 
   return (
-    <View style={container_style} pointerEvents="box-none">
+    <View style={[container_style, { pointerEvents: 'box-none' }]}>
       <View style={styles.nav_bar}>
         <TouchableOpacity
           style={styles.special_btn}

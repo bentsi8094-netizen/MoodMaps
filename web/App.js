@@ -41,21 +41,32 @@ if (Platform.OS === 'web') {
     console.error("[Web Global Error]:", event.error);
   });
 
-  if (!document.getElementById('moodmaps-global-styles')) {
-    const style = document.createElement('style');
-    style.id = 'moodmaps-global-styles';
-    style.textContent = `
+  // Use a more robust check and injection method
+  const injectStyles = () => {
+    if (typeof document === 'undefined') return;
+    let styleTag = document.getElementById('moodmaps-global-styles');
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = 'moodmaps-global-styles';
+      document.head.appendChild(styleTag);
+    }
+    styleTag.textContent = `
       html, body, #root {
-        height: 100vh !important;
-        width: 100vw !important;
+        height: 100% !important;
+        width: 100% !important;
         margin: 0;
         padding: 0;
         overflow: hidden;
         background-color: #192f6a !important;
+        position: fixed;
+      }
+      * {
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
     `;
-    document.head.appendChild(style);
-  }
+  };
+  injectStyles();
 }
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
