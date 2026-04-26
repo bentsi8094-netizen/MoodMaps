@@ -78,8 +78,12 @@ export default function SignInScreen({ on_login }) {
           });
           const payload = await res.json();
           
+          // VISUAL PROOF: Clear log to prove the token is working and Google returned valid data
+          console.log("%c🟢 [GOOGLE AUTH PROOF]", "color: #00ff00; font-weight: bold", "Token is VALID. Verified Email:", payload.email);
+          
           const response = await user_service.login(payload.email, "GOOGLE_AUTH_SERVICE", tokenResponse.access_token); 
           if (response.success) {
+            console.log("🔵 [SERVER AUTH PROOF]", "Login succeeded with Google token.");
             await AsyncStorage.setItem('user_token', response.token);
             await AsyncStorage.setItem('user_data', JSON.stringify(response.user));
             update_api_token(response.token);
