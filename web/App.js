@@ -91,4 +91,6 @@ export default function App() {
   );
 }
 
-registerRootComponent(App);
+// registerRootComponent is already called in index.js. Calling it twice causes 
+// "ReactDOMClient.createRoot() on a container that has already been passed to createRoot()" errors on web.
+// registerRootComponent(App); 

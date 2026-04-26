@@ -11,6 +11,9 @@ const UniversalMapView = forwardRef(({
   const [mapInstance, setMapInstance] = React.useState(null);
   const mapDivRef = useRef(null);
   const googleMapRef = useRef(null);
+  const retryCountRef = useRef(0);
+  const MAX_RETRIES = 20;
+
 
   useImperativeHandle(ref, () => ({
     animateToRegion: (region, duration) => {
@@ -33,10 +36,15 @@ const UniversalMapView = forwardRef(({
       // 2. SAFETY CHECK: Ensure the Map constructor is actually available.
       // Even if Google calls this callback, some internal hydration might still be happening.
       if (!window.google || !window.google.maps || !window.google.maps.Map) {
-        console.warn("[UniversalMapView] Google Maps context missing in callback, retrying...");
-        setTimeout(() => {
-          if (window.initMoodMap) window.initMoodMap();
-        }, 100);
+        if (retryCountRef.current < MAX_RETRIES) {
+          retryCountRef.current++;
+          console.warn(`[UniversalMapView] Google Maps context missing (Attempt ${retryCountRef.current}/${MAX_RETRIES}), retrying in 500ms...`);
+          setTimeout(() => {
+            if (window.initMoodMap) window.initMoodMap();
+          }, 500);
+        } else {
+          console.error("[UniversalMapView] Max retries reached. Google Maps failed to initialize.");
+        }
         return;
       }
       
@@ -84,8 +92,9 @@ const UniversalMapView = forwardRef(({
       // If script is already there, manually trigger the initialization
       // We wrap it in a small timeout to ensure it happens AFTER the div is rendered in the current mount cycle
       setTimeout(() => {
+        retryCountRef.current = 0; // Reset count for manual trigger
         if (window.initMoodMap) window.initMoodMap();
-      }, 0);
+      }, 100);
     }
 
     return () => {

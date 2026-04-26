@@ -143,11 +143,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.18)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
     paddingHorizontal: 5,
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 8px 10px rgba(0, 0, 0, 0.2)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 10,
+      }
+    })
   },
   tab_btn: {
     paddingVertical: 8,
@@ -171,10 +178,17 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 4,
-    shadowColor: "#000000",
-    shadowOpacity: 0.2,
-    shadowRadius: 3
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 4px 3px rgba(0, 0, 0, 0.2)',
+      },
+      default: {
+        elevation: 4,
+        shadowColor: "#000000",
+        shadowOpacity: 0.2,
+        shadowRadius: 3
+      }
+    })
   },
   special_btn_text: {
     color: 'white',

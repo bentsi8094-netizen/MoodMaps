@@ -301,7 +301,7 @@ const styles = StyleSheet.create({
     })
   },
   publish_btn_text: { color: 'white', fontWeight: 'bold', fontSize: 18 },
-  btn_disabled: { backgroundColor: '#333', shadowOpacity: 0 },
+  btn_disabled: { backgroundColor: '#333' },
   emoji_hint_popup: {
     position: 'absolute',
     bottom: 70,

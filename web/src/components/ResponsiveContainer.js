@@ -66,12 +66,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#333',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 25 },
-    shadowOpacity: 0.6,
-    shadowRadius: 35,
-    elevation: 25,
     position: 'relative',
+    ...Platform.select({
+      web: {
+        boxShadow: '0px 25px 35px rgba(0, 0, 0, 0.6)',
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 25 },
+        shadowOpacity: 0.6,
+        shadowRadius: 35,
+        elevation: 25,
+      }
+    })
   }
 });
 
