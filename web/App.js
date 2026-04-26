@@ -41,18 +41,21 @@ if (Platform.OS === 'web') {
     console.error("[Web Global Error]:", event.error);
   });
 
-  const style = document.createElement('style');
-  style.textContent = `
-    html, body, #root {
-      height: 100vh !important;
-      width: 100vw !important;
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      background-color: #192f6a !important; /* Force Navy background early */
-    }
-  `;
-  document.head.appendChild(style);
+  if (!document.getElementById('moodmaps-global-styles')) {
+    const style = document.createElement('style');
+    style.id = 'moodmaps-global-styles';
+    style.textContent = `
+      html, body, #root {
+        height: 100vh !important;
+        width: 100vw !important;
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #192f6a !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 }
 
 import { GoogleOAuthProvider } from '@react-oauth/google';
